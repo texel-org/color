@@ -1,0 +1,49 @@
+{
+  "name": "saido",
+  "version": "1.0.0",
+  "description": "an esoteric colour picker in OKLCH",
+  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Matt DesLauriers",
+    "url": "https://github.com/mattdesl"
+  },
+  "devDependencies": {
+    "array-almost-equal": "^1.0.0",
+    "canvas-sketch": "^0.7.7",
+    "canvas-sketch-cli": "^1.11.21",
+    "colorjs.io": "^0.5.2",
+    "esbuild": "^0.23.0",
+    "gl-matrix": "^3.4.3",
+    "tape": "^5.8.1"
+  },
+  "scripts": {
+    "test": "node test/test.js && node test/test-colorjs.js",
+    "bench": "node test/bench-colorjs.js"
+  },
+  "keywords": [
+    "oklch",
+    "oklab",
+    "color",
+    "colour",
+    "picker",
+    "tool",
+    "rgb",
+    "srgb",
+    "convert",
+    "saturation",
+    "chroma",
+    "perceptual",
+    "uniform",
+    "perceptually"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mattdesl/saido.git"
+  },
+  "homepage": "https://github.com/mattdesl/saido",
+  "bugs": {
+    "url": "https://github.com/mattdesl/saido/issues"
+  }
+}
