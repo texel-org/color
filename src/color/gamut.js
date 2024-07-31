@@ -15,7 +15,7 @@ import {
   clamp,
   degToRad,
   lerp,
-  clippedRGB,
+  clampedRGB,
   isRGBInGamut,
   vec3,
 } from "./util.js";
@@ -324,7 +324,7 @@ export function gamutMapOKLCH(
     convert(out, OKLCH, gamutSpaceBase, rgbVec);
   }
   // clip the linear RGB to 0..1 range
-  clippedRGB(rgbVec, rgbVec);
+  clampedRGB(rgbVec, rgbVec);
   // finally, convert linear RGB to the final target space (e.g. sRGB or XYZ)
   // this is often just a linear to gamma transfer, unless another target space is specified
   convert(rgbVec, gamutSpaceBase, targetSpace, out);

@@ -1,6 +1,6 @@
 import { OKLab_to, sRGBGamut } from "./convert.js";
 import { findCusp, findGamutIntersection, getGamutLMStoRGB } from "./gamut.js";
-import { vec3 } from "./util.js";
+import { vec3, constrainAngle as constrain } from "./util.js";
 
 const K1 = 0.206;
 const K2 = 0.03;
@@ -12,8 +12,6 @@ const tmp3A = vec3();
 const tmp2Cusp = [0, 0];
 
 const tau = 2 * Math.PI;
-
-const constrain = (angle) => ((angle % 360) + 360) % 360;
 
 const copySign = (to, from) => (Math.sign(to) === Math.sign(from) ? to : -to);
 

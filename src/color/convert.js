@@ -18,6 +18,10 @@ import {
   OKLab_to_linear_P3_coefficients,
   OKLab_to_linear_rec2020_coefficients,
   OKLab_to_linear_sRGB_coefficients,
+  linear_A98RGB_to_XYZ_M,
+  XYZ_to_linear_A98RGB_M,
+  linear_A98RGB_to_LMS_M,
+  LMS_to_linear_A98RGB_M,
 } from "./conversion_matrices.js";
 
 import {
@@ -233,6 +237,43 @@ export const Rec2020 = {
   },
 };
 
+export const A98RGBLinear = {
+  id: "a98-rgb-linear",
+  toXYZ_M: linear_A98RGB_to_XYZ_M,
+  fromXYZ_M: XYZ_to_linear_A98RGB_M,
+  toLMS_M: linear_A98RGB_to_LMS_M,
+  fromLMS_M: LMS_to_linear_A98RGB_M,
+};
+
+const a98rgb_to_linear = (val) => {
+  let sign = val < 0 ? -1 : 1;
+  let abs = Math.abs(val);
+  return sign * Math.pow(abs, 563 / 256);
+};
+
+const a98rgb_to_gamma = (val) => {
+  let sign = val < 0 ? -1 : 1;
+  let abs = Math.abs(val);
+  return sign * Math.pow(abs, 256 / 563);
+};
+
+export const A98RGB = {
+  id: "a98-rgb",
+  base: A98RGBLinear,
+  toBase: (vec, out = vec3()) => {
+    out[0] = a98rgb_to_linear(vec[0]);
+    out[1] = a98rgb_to_linear(vec[1]);
+    out[2] = a98rgb_to_linear(vec[2]);
+    return out;
+  },
+  fromBase: (vec, out = vec3()) => {
+    out[0] = a98rgb_to_gamma(vec[0]);
+    out[1] = a98rgb_to_gamma(vec[1]);
+    out[2] = a98rgb_to_gamma(vec[2]);
+    return out;
+  },
+};
+
 export const sRGBGamut = {
   space: sRGB,
   coefficients: OKLab_to_linear_sRGB_coefficients,
@@ -243,6 +284,10 @@ export const Rec2020Gamut = {
 };
 export const DisplayP3Gamut = {
   space: DisplayP3,
+  coefficients: OKLab_to_linear_P3_coefficients,
+};
+export const A98RGBGamut = {
+  space: A98RGB,
   coefficients: OKLab_to_linear_P3_coefficients,
 };
 
@@ -264,7 +309,7 @@ export const OKHSV = {
   fromBase: (OKLab, out = vec3()) => oklabToOkhsv(OKLab, sRGBGamut, out),
 };
 
-export const supportedColorSpaces = () => {
+export const listColorSpaces = () => {
   return [
     XYZ,
     OKLab,
@@ -277,14 +322,17 @@ export const supportedColorSpaces = () => {
     DisplayP3Linear,
     Rec2020,
     Rec2020Linear,
+    A98RGB,
+    A98RGBLinear,
   ];
 };
 
-export const serialize = (
-  input,
-  inputSpace = sRGB,
-  outputSpace = inputSpace
-) => {
+export const listColorGamuts = () => {
+  return [sRGBGamut, DisplayP3Gamut, Rec2020Gamut, A98RGBGamut];
+};
+
+export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
+  if (!inputSpace) throw new Error(`must specify an input space`);
   if (inputSpace !== outputSpace) {
     convert(input, inputSpace, outputSpace, tmp3);
   } else {
@@ -297,7 +345,7 @@ export const serialize = (
     const b = floatToByte(tmp3[2]);
     return `rgb(${r}, ${g}, ${b})`;
   } else if (outputSpace == OKLab || outputSpace == OKLCH) {
-    return `${outputSpace.id}(${tmp3[0]} ${tmp3[1]} ${tmp3[2]}})`;
+    return `${outputSpace.id}(${tmp3[0]} ${tmp3[1]} ${tmp3[2]})`;
   } else {
     return `color(${outputSpace.id} ${tmp3[0]} ${tmp3[1]} ${tmp3[2]})`;
   }

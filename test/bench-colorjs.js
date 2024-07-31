@@ -4,13 +4,13 @@ import {
   OKLCH,
   sRGB,
   sRGBGamut,
-  supportedColorSpaces,
+  listColorSpaces,
 } from "../src/color/convert.js";
 import { gamutMapOKLCH } from "../src/color/gamut.js";
 
-const spaces = supportedColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
+const spaces = listColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
 const spacesForColorjs = spaces.map((space) => {
-  return space.id.replace("display-", "");
+  return space.id.replace("display-", "").replace("a98-rgb", "a98rgb");
 });
 
 const vecs = Array(128 * 128)

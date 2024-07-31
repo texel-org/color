@@ -45,6 +45,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import json
+from coloraide import algebra as alg
 sys.path.insert(0, os.getcwd())
 
 # Use higher precision Oklab conversion matrix along with LMS matrix with our exact white point
@@ -72,20 +73,24 @@ def do_calc(GAMUT = 'srgb'):
     var_name = 'linear_P3'
   elif GAMUT == 'rec2020':
     var_name = 'linear_rec2020'
+  elif GAMUT == 'a98-rgb':
+    var_name = 'linear_A98RGB'
+
+  RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(xyzt_white_d65, GAMUT)
 
   # Use P3 gamut (or some other gamut)
   # Calculate the gamut <-> LMS matrices to adjust the working gamut
   if GAMUT == 'rec2020':
-      import coloraide.spaces.rec2020_linear as rec2020
-      from coloraide import algebra as alg
-
-      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, rec2020.RGB_TO_XYZ)
+      # import coloraide.spaces.rec2020_linear as rec2020
+      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
       LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
   elif GAMUT == 'display-p3':
-      import coloraide.spaces.display_p3_linear as p3
-      from coloraide import algebra as alg
-
-      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, p3.RGB_TO_XYZ)
+      # import coloraide.spaces.display_p3_linear as p3
+      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
+      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
+  elif GAMUT == 'a98-rgb':
+      # import coloraide.spaces.a98_rgb as a98rgb
+      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
       LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
   else:
       RGBL_TO_LMS = SRGBL_TO_LMS
@@ -96,8 +101,6 @@ def do_calc(GAMUT = 'srgb'):
 
   # print('RGBL_TO_LMS',RGBL_TO_LMS)
   # print('LMS_TO_RGBL', LMS_TO_RGBL)
-
-  RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(xyzt_white_d65, GAMUT)
 
   RGBL_TO_LMS = np.asfarray(RGBL_TO_LMS)
   LMS_TO_RGBL = np.asfarray(LMS_TO_RGBL)
@@ -415,7 +418,6 @@ def do_calc(GAMUT = 'srgb'):
   
     
   print(f'// {var_name} to XYZ matrices\n')
-  
   print_matrix(var_name, 'XYZ', np.asfarray(RGBL_TO_XYZ))
   print_matrix('XYZ', var_name, np.asfarray(XYZ_TO_RGBL))
   
@@ -449,5 +451,5 @@ print_matrix('LMS', 'OKLab', np.asfarray(LMS3_TO_OKLAB))
 print_matrix('XYZ', 'LMS', np.asfarray(XYZ_TO_LMS))
 print_matrix('LMS', 'XYZ', np.asfarray(LMS_TO_XYZ))
 
-for gamut in ['srgb', 'display-p3', 'rec2020']:
+for gamut in ['srgb', 'display-p3', 'rec2020', 'a98-rgb']:
   d = do_calc(gamut)

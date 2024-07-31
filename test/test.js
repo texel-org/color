@@ -1,5 +1,10 @@
 import test from "tape";
-import { floatToByte, isRGBInGamut } from "../src/color/util.js";
+import {
+  floatToByte,
+  hexToRGB,
+  isRGBInGamut,
+  RGBtoHex,
+} from "../src/color/util.js";
 import {
   linear_sRGB_to_LMS_M,
   LMS_to_linear_sRGB_M,
@@ -16,7 +21,6 @@ import {
   OKLCH,
   sRGB,
   sRGBLinear,
-  supportedColorSpaces,
   XYZ,
   OKLab_from,
   OKLab_to,
@@ -24,9 +28,10 @@ import {
   OKHSL,
   sRGBGamut,
   OKHSV,
+  serialize,
 } from "../src/color/convert.js";
 import { findCusp, gamutMapOKLCH } from "../src/color/gamut.js";
-import { degToRad } from "../src/math/util.js";
+import { degToRad } from "./old/math/util.js";
 import {
   okhslToOklab,
   okhsvToOklab,
@@ -192,6 +197,21 @@ test("should gamut map", async (t) => {
   const oklch = [0.9, 0.4, 30];
   const rgb = convert(oklch, OKLCH, sRGB);
   t.equals(isRGBInGamut(rgb, 0), false);
+});
+
+test("should serialize", async (t) => {
+  t.deepEqual(serialize([0, 0.5, 1], sRGB), "rgb(0, 128, 255)");
+  t.deepEqual(serialize([0, 0.5, 1], sRGBLinear), "color(srgb-linear 0 0.5 1)");
+  t.deepEqual(serialize([1, 0, 0], OKLCH, sRGB), "rgb(255, 255, 255)");
+  t.deepEqual(serialize([1, 0, 0], OKLCH), "oklch(1 0 0)");
+});
+
+test("utils", async (t) => {
+  t.deepEqual(RGBtoHex([0, 0.5, 1]), "#0080ff");
+  t.deepEqual(hexToRGB("#0080ff"), [0, 0.5019607843137255, 1]);
+  const tmp = [0, 0, 0];
+  hexToRGB("#0080ff", tmp);
+  t.deepEqual(tmp, [0, 0.5019607843137255, 1]);
 });
 
 function roundToNDecimals(value, digits) {

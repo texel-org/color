@@ -15,12 +15,15 @@
     "canvas-sketch-cli": "^1.11.21",
     "colorjs.io": "^0.5.2",
     "esbuild": "^0.23.0",
+    "faucet": "^0.0.4",
     "gl-matrix": "^3.4.3",
+    "prettier": "^3.3.3",
     "tape": "^5.8.1"
   },
   "scripts": {
-    "test": "node test/test.js && node test/test-colorjs.js",
-    "bench": "node test/bench-colorjs.js"
+    "test": "faucet test/test*.js",
+    "bench": "node test/bench-colorjs.js",
+    "matrices": "python3 tools/print_matrices.py > src/color/conversion_matrices.js && prettier src/color/conversion_matrices.js --write"
   },
   "keywords": [
     "oklch",

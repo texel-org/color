@@ -14,7 +14,9 @@ export const vec3 = () => [0, 0, 0];
 
 export const normalizeHue = (hue) => ((hue = hue % 360) < 0 ? hue + 360 : hue);
 
-export const hexToRGB = (str) => {
+export const constrainAngle = (angle) => ((angle % 360) + 360) % 360;
+
+export const hexToRGB = (str, out = vec3()) => {
   let hex = str.replace(/#/, "");
   if (hex.length === 3) {
     // expand shorthand
@@ -24,14 +26,14 @@ export const hexToRGB = (str) => {
     hex = hex.slice(0, 6);
   }
   const rgb = parseInt(hex, 16);
-  let r = (rgb >> 16) & 0xff;
-  let g = (rgb >> 8) & 0xff;
-  let b = rgb & 0xff;
-  return [r, g, b];
+  out[0] = ((rgb >> 16) & 0xff) / 0xff;
+  out[1] = ((rgb >> 8) & 0xff) / 0xff;
+  out[2] = (rgb & 0xff) / 0xff;
+  return out;
 };
 
 export const RGBtoHex = (rgb) =>
-  `#${rgb.map((n) => roundByte(n).toString(16).padStart(2, "0")).join("")}`;
+  `#${rgb.map((n) => floatToByte(n).toString(16).padStart(2, "0")).join("")}`;
 
 export const isRGBInGamut = (lrgb, ep = GAMUT_EPSILON) => {
   const r = lrgb[0];
@@ -47,11 +49,11 @@ export const isRGBInGamut = (lrgb, ep = GAMUT_EPSILON) => {
   );
 };
 
-export const clippedRGB = (rgb) => {
-  rgb[0] = clamp(rgb[0], 0, 1);
-  rgb[1] = clamp(rgb[1], 0, 1);
-  rgb[2] = clamp(rgb[2], 0, 1);
-  return rgb;
+export const clampedRGB = (rgb, out = vec3()) => {
+  out[0] = clamp(rgb[0], 0, 1);
+  out[1] = clamp(rgb[1], 0, 1);
+  out[2] = clamp(rgb[2], 0, 1);
+  return out;
 };
 
 // in degrees

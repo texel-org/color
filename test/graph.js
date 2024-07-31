@@ -2,56 +2,49 @@ import canvasSketch from "canvas-sketch";
 import {
   findCusp,
   gamutMapOKLCH,
-  GamutMapPreserveLightness,
   MapToAdaptiveCuspL,
-  MapToAdaptiveGray,
-  mapToGamutLcusp,
-  MapToGray,
-  sRGBGamut,
-} from "../src/color/oklab-cusp.js";
+} from "../src/color/gamut.js";
 import {
+  A98RGBGamut,
   convert,
-  DisplayP3,
-  OKLab,
+  DisplayP3Gamut,
   OKLCH,
-  serialize,
-  sRGB,
-  sRGBLinear,
+  Rec2020Gamut,
+  sRGBGamut,
 } from "../src/color/convert.js";
 import {
-  clippedRGB,
+  constrainAngle,
   floatToByte,
   isRGBInGamut,
-  isRGBInGamutGBInGamut,
 } from "../src/color/util.js";
-import {
-  LMS_to_linear_sRGB_M,
-  OKLab_to_linear_sRGB_coefficients,
-} from "../src/color/conversion_matrices.js";
-import { clamp, degToRad } from "../src/math/util.js";
+import { degToRad } from "../src/color/util.js";
+import arrayAlmostEqual from "array-almost-equal";
 
 const settings = {
-  dimensions: [2048, 2048],
+  dimensions: [768, 768],
+  animate: true,
+  playbackRate: "throttle",
+  fps: 2,
+  attributes: {
+    colorSpace: "display-p3",
+  },
 };
 
 const sketch = ({ width, height }) => {
-  return ({ context, width, height }) => {
+  return ({ context, width, height, frame, playhead }) => {
     const { colorSpace = "srgb" } = context.getContextAttributes();
+    const gamut = colorSpace === "srgb" ? sRGBGamut : DisplayP3Gamut;
+    const mapping = MapToAdaptiveCuspL;
 
     context.fillStyle = "gray";
     context.fillRect(0, 0, width, height);
-    const H = 90;
+    const H = constrainAngle((frame * 45) / 2);
     const hueAngle = degToRad(H);
     const a = Math.cos(hueAngle);
     const b = Math.sin(hueAngle);
-    const cusp = findCusp(
-      a,
-      b,
-      LMS_to_linear_sRGB_M,
-      OKLab_to_linear_sRGB_coefficients
-    );
+    const cusp = findCusp(a, b, gamut);
 
-    console.time("map");
+    // console.time("map");
     // console.profile("map");
     const tmp = [0, 0, 0];
     const pixels = new Uint8ClampedArray(width * height * 4).fill(0xff);
@@ -59,25 +52,23 @@ const sketch = ({ width, height }) => {
       for (let x = 0; x < width; x++) {
         const u = x / width;
         const v = y / height;
-        const L = 1 - v;
-        const C = 0.4 * u;
 
-        const outputSpace = sRGB;
-        const outputLinear = outputSpace.base;
+        const [L, C] = UVtoLC([u, v]);
 
         let oklch = [L, C, H];
-        let rgbl = convert(oklch, OKLCH, outputLinear, tmp);
-        if (!isRGBInGamut(rgbl, 0)) {
-          rgbl[0] = 0.25;
-          rgbl[1] = 0.25;
-          rgbl[2] = 0.25;
+        let rgb = convert(oklch, OKLCH, gamut.space, tmp);
+        if (!isRGBInGamut(rgb, 0)) {
+          rgb[0] = 0.25;
+          rgb[1] = 0.25;
+          rgb[2] = 0.25;
+          // if we wanted to fill the whole space with mapped colors
+          // rgb = gamutMapOKLCH(oklch, gamut, sRGB, tmp, mapping);
         }
 
-        convert(rgbl, outputLinear, outputSpace, tmp);
         const idx = x + y * width;
-        pixels[idx * 4 + 0] = floatToByte(tmp[0]);
-        pixels[idx * 4 + 1] = floatToByte(tmp[1]);
-        pixels[idx * 4 + 2] = floatToByte(tmp[2]);
+        pixels[idx * 4 + 0] = floatToByte(rgb[0]);
+        pixels[idx * 4 + 1] = floatToByte(rgb[1]);
+        pixels[idx * 4 + 2] = floatToByte(rgb[2]);
       }
     }
     context.putImageData(
@@ -86,47 +77,96 @@ const sketch = ({ width, height }) => {
       0
     );
     // console.profileEnd("map");
-    console.timeEnd("map");
+    // console.timeEnd("map");
 
-    const triangle = [[1, 0], cusp, [0, 0]];
-
-    const lineWidth = width * 0.002;
+    const A = [1, 0];
+    const B = [0, 0];
+    const lineWidth = width * 0.003;
     context.lineWidth = lineWidth;
-    context.beginPath();
-    triangle.forEach((oklch) => {
-      const [x, y] = LCtoXY(oklch);
-      context.lineTo(x, y);
-    });
-    context.closePath();
+
+    const gamuts = [
+      { defaultColor: "yellow", gamut: sRGBGamut },
+      { defaultColor: "palegreen", gamut: DisplayP3Gamut },
+      { defaultColor: "red", gamut: Rec2020Gamut },
+      { defaultColor: "pink", gamut: A98RGBGamut },
+    ];
+
+    for (let { gamut: dispGamut, defaultColor } of gamuts) {
+      const gamutCusp = findCusp(a, b, dispGamut);
+      const gamutTri = [A, gamutCusp, B];
+      drawLCTriangle(
+        context,
+        gamutTri,
+        gamut === dispGamut ? "white" : defaultColor
+      );
+    }
+
     context.strokeStyle = "white";
-    context.stroke();
 
     const steps = 64;
     for (let i = 0; i < steps; i++) {
-      const ox = 0.2;
-      const oy = 0.3;
-      const r = 0.4;
+      // get some LC point that is very likely to be out of gamut
+      const ox = 0.5;
+      const oy = 0.5;
+      const r = 1;
       const t = (i / steps) * degToRad(360) + degToRad(-180);
-
       const xy = [Math.cos(t) * r + ox, Math.sin(t) * r + oy];
       const [L, C] = UVtoLC(xy);
       const oklch = [L, C, H];
-      drawLCPoint(context, oklch, (width * 0.01) / 2);
+      const lc = oklch.slice(0, 2);
 
-      const mappedLCH = oklch.slice();
-      gamutMapOKLCH(oklch, sRGBGamut, OKLCH, mappedLCH);
+      const mapped = gamutMapOKLCH(oklch, gamut, OKLCH, tmp, mapping);
 
-      drawLCPoint(context, mappedLCH);
+      const radius = width * 0.01;
+      const didChange = !arrayAlmostEqual(mapped, oklch);
+      if (didChange) {
+        context.globalAlpha = 0.5;
+        drawLCPoint(context, lc, radius / 2, "white");
+        context.beginPath();
+        context.lineTo(...LCtoXY(lc));
+        context.lineTo(...LCtoXY(mapped));
+        context.stroke();
+        context.globalAlpha = 1;
+        drawLCPoint(context, mapped.slice(0, 2), radius, "white");
+      } else {
+        drawLCPoint(context, lc, radius);
+      }
+    }
 
+    const fontSize = width * 0.03;
+    const boxHeight = fontSize * gamuts.length;
+    const pad = width * 0.05;
+    const padleft = width * 0.1;
+    context.fillStyle = "black";
+
+    for (let i = 0; i < gamuts.length; i++) {
+      const { gamut: dispGamut, defaultColor } = gamuts[i];
+      const curColor = dispGamut === gamut ? "white" : defaultColor;
+
+      context.font = `${fontSize}px monospace`;
+      context.textAlign = "right";
+      context.textBaseline = "top";
+      context.fillStyle = curColor;
+      const x = width - pad - padleft;
+      const y = height - boxHeight + i * fontSize - pad;
+      context.fillText(dispGamut.space.id, x, y);
       context.beginPath();
-      context.lineTo(...LCtoXY(oklch));
-      context.lineTo(...LCtoXY(mappedLCH));
+      context.lineTo(x + fontSize / 2, y + fontSize * 0.4);
+      context.lineTo(x + padleft, y + fontSize * 0.4);
+      context.strokeStyle = curColor;
       context.stroke();
     }
+
+    context.fillStyle = "white";
+    context.fillText(
+      `Hue: ${H.toFixed(0)}º`,
+      width - pad,
+      height - pad - boxHeight - fontSize * 2
+    );
   };
 
   function LCtoXY(okLC) {
-    const x = (okLC[1] / 0.4) * width;
+    const x = (okLC[1] / 1) * width;
     const y = (1 - okLC[0]) * height;
     return [x, y];
   }
@@ -137,15 +177,37 @@ const sketch = ({ width, height }) => {
 
   function UVtoLC(xy) {
     const L = 1 - xy[1];
-    const C = xy[0] * 0.4;
+    const C = xy[0] * 1;
     return [L, C];
   }
 
-  function drawLCPoint(context, okLC, radius = width * 0.01) {
+  function drawLCTriangle(context, triangle, color = "white") {
+    context.beginPath();
+    triangle.forEach((oklch) => {
+      const [x, y] = LCtoXY(oklch);
+      context.lineTo(x, y);
+    });
+    context.closePath();
+    context.strokeStyle = color;
+    context.stroke();
+  }
+
+  function drawLCPoint(
+    context,
+    okLC,
+    radius = width * 0.01,
+    color = "white",
+    fill = true
+  ) {
     context.beginPath();
     context.arc(...LCtoXY(okLC), radius, 0, Math.PI * 2);
-    context.fillStyle = "white";
-    context.fill();
+    if (fill) {
+      context.fillStyle = color;
+      context.fill();
+    } else {
+      context.strokeStyle = color;
+      context.stroke();
+    }
   }
 };
 
