@@ -5,6 +5,8 @@ import {
   sRGB,
   sRGBGamut,
   listColorSpaces,
+  DisplayP3Gamut,
+  DisplayP3,
 } from "../src/color/convert.js";
 import { gamutMapOKLCH } from "../src/color/gamut.js";
 
@@ -17,7 +19,12 @@ const vecs = Array(128 * 128)
   .fill()
   .map((_, i, lst) => {
     const t = i / (lst.length - 1);
-    return [t, t, t];
+    return (
+      Array(3)
+        .fill()
+        // -0.5 .. 1.5
+        .map(() => t + (t * 2 - 1) * 0.5)
+    );
   });
 
 const tmp = [0, 0, 0];
@@ -60,7 +67,7 @@ now = performance.now();
 for (let vec of vecs) {
   for (let i = 0; i < spacesForColorjs.length; i++) {
     const a = spacesForColorjs[i];
-    new Color(a, vec).to("srgb").toGamut("srgb");
+    new Color(a, vec).to("p3").toGamut({ space: "p3", method: "css" });
   }
 }
 elapsedColorjs = performance.now() - now;
@@ -70,7 +77,7 @@ for (let vec of vecs) {
   for (let i = 0; i < spaces.length; i++) {
     const a = spaces[i];
     convert(vec, a, OKLCH, tmp);
-    gamutMapOKLCH(tmp, sRGBGamut, sRGB, tmp);
+    gamutMapOKLCH(tmp, DisplayP3Gamut, DisplayP3, tmp);
   }
 }
 elapsedOurs = performance.now() - now;

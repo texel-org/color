@@ -39,10 +39,6 @@ const sketch = ({ width, height }) => {
     context.fillStyle = "gray";
     context.fillRect(0, 0, width, height);
     const H = constrainAngle((frame * 45) / 2);
-    const hueAngle = degToRad(H);
-    const a = Math.cos(hueAngle);
-    const b = Math.sin(hueAngle);
-    const cusp = findCusp(a, b, gamut);
 
     // console.time("map");
     // console.profile("map");
@@ -90,6 +86,10 @@ const sketch = ({ width, height }) => {
       { defaultColor: "red", gamut: Rec2020Gamut },
       { defaultColor: "pink", gamut: A98RGBGamut },
     ];
+
+    const hueAngle = degToRad(H);
+    const a = Math.cos(hueAngle);
+    const b = Math.sin(hueAngle);
 
     for (let { gamut: dispGamut, defaultColor } of gamuts) {
       const gamutCusp = findCusp(a, b, dispGamut);

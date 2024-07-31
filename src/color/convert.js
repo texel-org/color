@@ -22,6 +22,7 @@ import {
   XYZ_to_linear_A98RGB_M,
   linear_A98RGB_to_LMS_M,
   LMS_to_linear_A98RGB_M,
+  OKLab_to_linear_A98RGB_coefficients,
 } from "./conversion_matrices.js";
 
 import {
@@ -176,7 +177,7 @@ export const OKLCH = {
   id: "oklch",
   base: OKLab,
   toBase: (OKLCH, out = vec3()) => {
-    // Note: some version of Colorjs.io clamps chroma
+    // Note: newer version of Colorjs.io clamps OKLCH chroma
     // However, this means that oklch(0.5, -0.36, 90) -> srgb will result in an in-gamut rgb
     // which seems a bit odd; you'd expect it to be out of gamut. So we will leave
     // chroma unclamped for this conversion.
@@ -288,8 +289,12 @@ export const DisplayP3Gamut = {
 };
 export const A98RGBGamut = {
   space: A98RGB,
-  coefficients: OKLab_to_linear_P3_coefficients,
+  coefficients: OKLab_to_linear_A98RGB_coefficients,
 };
+// export const ProPhotoRGBGamut = {
+//   space: A98RGB,
+//   coefficients: OKLab_to_linear_P3_coefficients,
+// };
 
 export const OKHSL = {
   // Note: sRGB gamut only
@@ -374,28 +379,30 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
 
   // which base are we converting to? e.g. if OKLCH, then use OKLab
   const toBaseSpace = toSpace.base ?? toSpace;
+  const curID = curBaseSpace.id;
+  const toID = toBaseSpace.id;
 
   if (curBaseSpace === toBaseSpace) {
     // base space is the same, we can safely skip
-  } else if (curBaseSpace === OKLab) {
+  } else if (curID === "oklab") {
     // going from OKLab to another space
     if (!toBaseSpace.fromLMS_M)
       throw new Error(`no LMS matrix on base target: ${toBaseSpace.id}`);
     out = OKLab_to(out, toBaseSpace.fromLMS_M, out);
-  } else if (toBaseSpace === OKLab) {
+  } else if (toID === "oklab") {
     // going from [base space] to OKLab
     if (!curBaseSpace.toLMS_M)
-      throw new Error(`no LMS matrix on base source: ${curBaseSpace.id}`);
+      throw new Error(`no LMS matrix on base source: ${curID}`);
     out = OKLab_from(out, curBaseSpace.toLMS_M, out);
   } else {
-    if (curBaseSpace === XYZ) {
+    if (curID === "xyz") {
       if (!toBaseSpace.fromXYZ_M)
-        throw new Error(`no XYZ matrix on base target: ${toBaseSpace.id}`);
+        throw new Error(`no XYZ matrix on base target: ${toID}`);
       // from XYZ to [base space]
       out = transform(out, toBaseSpace.fromXYZ_M, out);
-    } else if (toBaseSpace === XYZ) {
+    } else if (toID === "xyz") {
       if (!curBaseSpace.toXYZ_M)
-        throw new Error(`no XYZ matrix on base source: ${curBaseSpace.id}`);
+        throw new Error(`no XYZ matrix on base source: ${curID}`);
       // from [base space] to XYZ
       out = transform(out, curBaseSpace.toXYZ_M, out);
     } else if (curBaseSpace.toXYZ_M && toBaseSpace.fromXYZ_M) {

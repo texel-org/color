@@ -1,16 +1,5 @@
 import { OKLab_to_LMS_M } from "./conversion_matrices.js";
-import {
-  OKLab_to,
-  sRGBGamut,
-  DisplayP3Gamut,
-  Rec2020Gamut,
-  DisplayP3,
-  sRGB,
-  Rec2020,
-  convert,
-  OKLCH,
-  OKLab,
-} from "./convert.js";
+import { OKLab_to, sRGBGamut, convert, OKLCH, OKLab } from "./convert.js";
 import {
   clamp,
   degToRad,
@@ -86,20 +75,30 @@ export function computeMaxSaturation(a, b, lmsToRgb, okCoeff) {
   setXY(tmp2, a, b);
   setYZ(tmp3, a, b);
 
+  let chnlCoeff, chnlLMS;
   // TODO: check performance of array destructuring...
   if (dotXY(okCoeff[0][0], tmp2) > 1) {
     // Red component
-    [k0, k1, k2, k3, k4] = okCoeff[0][1];
-    [wl, wm, ws] = lmsToRgb[0];
+    chnlCoeff = okCoeff[0][1];
+    chnlLMS = lmsToRgb[0];
   } else if (dotXY(okCoeff[1][0], tmp2) > 1) {
     // Green component
-    [k0, k1, k2, k3, k4] = okCoeff[1][1];
-    [wl, wm, ws] = lmsToRgb[1];
+    chnlCoeff = okCoeff[1][1];
+    chnlLMS = lmsToRgb[1];
   } else {
     // Blue component
-    [k0, k1, k2, k3, k4] = okCoeff[2][1];
-    [wl, wm, ws] = lmsToRgb[2];
+    chnlCoeff = okCoeff[2][1];
+    chnlLMS = lmsToRgb[2];
   }
+
+  k0 = chnlCoeff[0];
+  k1 = chnlCoeff[1];
+  k2 = chnlCoeff[2];
+  k3 = chnlCoeff[3];
+  k4 = chnlCoeff[4];
+  wl = chnlLMS[0];
+  wm = chnlLMS[1];
+  ws = chnlLMS[2];
 
   // Approximate max saturation using a polynomial:
   let sat = k0 + k1 * a + k2 * b + k3 * (a * a) + k4 * a * b;

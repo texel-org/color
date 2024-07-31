@@ -1,8 +1,7 @@
 // import Color from "./colorjs-io.js";
 import * as saido from "../src/color/convert.js";
-
 const rgb = saido.convert([0.5, 0.15, 30], saido.OKLCH, saido.sRGB);
-// console.log(rgb);
+console.log(rgb);
 
 // import { convert, OKLCH, sRGB } from "../src/color/convert.js";
 // import { floatToByte, rgb_in_gamut } from "../src/color/util.js";
