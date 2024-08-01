@@ -1,4 +1,4 @@
-# saido
+# color-tools
 
 A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
 
@@ -15,7 +15,7 @@ A minimal and modern color library for JavaScript. Mainly useful for real-time a
 Use [npm](https://npmjs.com/) to install and import the module.
 
 ```sh
-npm install saido --save
+npm install color-tools --save
 ```
 
 ## Examples
@@ -23,7 +23,7 @@ npm install saido --save
 Converting OKLCH (cylindrical form of OKLab) to sRGB:
 
 ```js
-import { convert, OKLCH, sRGB } from "saido";
+import { convert, OKLCH, sRGB } from "color-tools";
 
 // L = 0 .. 1
 // C = 0 .. 0.4
@@ -37,9 +37,9 @@ const rgb = convert([0.5, 0.15, 30], OKLCH, sRGB);
 You can also use wildcard imports:
 
 ```js
-import * as saido from "saido";
+import * as color-tools from "color-tools";
 
-const rgb = saido.convert([0.5, 0.15, 30], saido.OKLCH, saido.sRGB);
+const rgb = color-tools.convert([0.5, 0.15, 30], color-tools.OKLCH, color-tools.sRGB);
 ```
 
 > :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~3.8kb minified bundle with esbuild.
@@ -47,7 +47,7 @@ const rgb = saido.convert([0.5, 0.15, 30], saido.OKLCH, saido.sRGB);
 Another example with gamut mapping and serialization for wide-gamut Canvas2D:
 
 ```js
-import { gamutMapOKLCH, DisplayP3Gamut, sRGBGamut, serialize } from "saido";
+import { gamutMapOKLCH, DisplayP3Gamut, sRGBGamut, serialize } from "color-tools";
 
 // Some value that may or may not be in sRGB gamut
 const oklch = [ 0.15, 0.425, 30 ];
@@ -86,7 +86,7 @@ The return value is the new coordinates in the destination space; such as `[r,g,
 Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's the the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
 
 ```js
-import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "saido";
+import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "color-tools";
 
 // gamut map to sRGB but return linear sRGB
 const lrgb = gamutMapOKLCH(oklch, sRGBGamut, sRGBLinear);
@@ -107,7 +107,7 @@ import {
   MapToCuspL,
   MapToAdaptiveGray,
   MapToAdaptiveCuspL,
-} from "saido";
+} from "color-tools";
 
 // preserve lightness when performing sRGB gamut mapping
 const rgb = [0, 0, 0];
@@ -119,7 +119,7 @@ gamutMapOKLCH(oklch, sRGBGamut, sRGB, rgb, MapToL);
 Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS.
 
 ```js
-import { serialize, sRGB, DisplayP3, OKLCH } from "saido";
+import { serialize, sRGB, DisplayP3, OKLCH } from "color-tools";
 
 serialize([0, 0.5, 1], sRGB); // "rgb(0, 128, 255)"
 serialize([0, 0.5, 1], DisplayP3); // "color(display-p3 0 0.5 1)"
@@ -160,7 +160,7 @@ import {
 
   // a function to list all spaces
   listColorSpaces,
-} from "saido";
+} from "color-tools";
 
 console.log(listColorSpaces()); // [XYZ, sRGB, sRGBLinear, ...]
 
@@ -185,7 +185,7 @@ import {
 
   // a function to list all gamuts
   listColorGamuts,
-} from "saido";
+} from "color-tools";
 
 console.log(listColorGamuts()); // [sRGBGamut, ...]
 
@@ -305,10 +305,6 @@ Speedup: 23.7x faster
 
 Clone, `npm install`, then `npm run` to list the available scripts, or `npm t` to run the tests.
 
-### Name
-
-The name _saido_ is from the Japanese term 彩度, meaning colourfulness, chroma, or saturation.
-
 ## Attributions
 
 This library was made possible due to the excellent prior work by many developers and engineers:
@@ -319,4 +315,4 @@ This library was made possible due to the excellent prior work by many developer
 
 ## License
 
-MIT, see [LICENSE.md](http://github.com/mattdesl/saido/blob/master/LICENSE.md) for details.
+MIT, see [LICENSE.md](http://github.com/mattdesl/color-tools/blob/master/LICENSE.md) for details.
