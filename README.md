@@ -5,10 +5,10 @@ A minimal and modern color library for JavaScript. Mainly useful for real-time a
 - Features: fast color conversion, color difference, gamut mapping, and serialization
 - Optimised for speed: approx 20-100 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
 - Optimised for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
-- Optimised for compact bundles: zero dependencies, and unused spaces can be automatically tree-shaked away for small sizes (e.g. ~3kb minified if you only require OKLCH to sRGB conversion)
+- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3kb minified if you only require OKLCH to sRGB conversion)
 - Optimised for accuracy: [high precision](#accuracy) color space matrices
 - Focused on a minimal and modern set of color spaces:
-  - oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, xyz (D65)
+  - xyz (D65), xyz-d50, oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, prophoto-rgb, prophoto-rgb-linear
 
 ## Install
 
@@ -42,11 +42,9 @@ import * as saido from "saido";
 const rgb = saido.convert([0.5, 0.15, 30], saido.OKLCH, saido.sRGB);
 ```
 
-Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code.
+> :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~3.8kb minified bundle with esbuild.
 
-> :bulb: With esbuild, the above code results in a ~3.8kb minified bundle.
-
-Another example with gamut mapping and serialization:
+Another example with gamut mapping and serialization for wide-gamut Canvas2D:
 
 ```js
 import { gamutMapOKLCH, DisplayP3Gamut, sRGBGamut, serialize } from "saido";
@@ -61,7 +59,7 @@ const gamut = isDisplayP3Supported ? DisplayP3Gamut : sRGBGamut;
 // map the input OKLCH to the R,G,B space (sRGB or DisplayP3)
 const rgb = gamutMapOKLCH(oklch, gamut);
 
-// get a CSS color string
+// get a CSS color string for your output space
 const color = serialize(rgb, gamut.space);
 
 // draw color to a Canvas2D context
@@ -129,11 +127,11 @@ serialize([1, 0, 0], OKLCH, sRGB); // "rgb(255, 255, 255)"
 serialize([1, 0, 0], OKLCH); // "oklch(1 0 0)"
 ```
 
-#### `delta = deltaEOK(oklchA, oklchB)`
+#### `delta = deltaEOK(oklabA, oklabB)`
 
-```js
-import { serialize, sRGB, DisplayP3, OKLCH } from "saido";
-```
+Performs a color difference in OKLab space between two coordinates. As this is a perceptually uniform color space that improves upon CIELAB and its flaws, it should be suitable as a replacement for the CIEDE2000 color difference equation in many situations.
+
+#### `[utils]`
 
 There are also a host of other [utilities](#utilities) exported by the module.
 
@@ -255,11 +253,11 @@ Converts the angle (given in degrees) to radians.
 
 Colorjs is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
 
-There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many other libraries, for example, do not distinguish between D50 and D65 in XYZ).
+There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 in XYZ).
 
 ### Supported Spaces
 
-This library does not aim to target every color space; it only focuses on a limited "modern" set, i.e. OKLab and its DeltaEOK has replaced HSL, CIELab, CIEDE2000, etc for many practical purposes, allowing the library to be simpler and slimmer.
+This library does not aim to target every color space; it only focuses on a limited "modern" set, i.e. OKLab, OKHSL and DeltaEOK have replaced CIELab, HSL, and CIEDE2000 for many practical purposes, allowing this library to be simpler and slimmer.
 
 ### Improvements & Techniques
 
@@ -288,19 +286,19 @@ Colorjs comparison benchmark on MacBook Air M2:
 
 ```
 OKLCH to sRGB with gamut mapping --
-Colorjs: 6276.03 ms
-Ours: 61.53 ms
-Speedup: 102.0x faster
+Colorjs: 6477.88 ms
+Ours: 59.88 ms
+Speedup: 108.2x faster
 
 All Conversions --
-Colorjs: 11030.15 ms
-Ours: 429.11 ms
-Speedup: 25.7x faster
+Colorjs: 9861.65 ms
+Ours: 412.78 ms
+Speedup: 23.9x faster
 
 Conversion + Gamut Mapping --
-Colorjs: 2188.11 ms
-Ours: 153.79 ms
-Speedup: 14.2x faster
+Colorjs: 1886.10 ms
+Ours: 79.52 ms
+Speedup: 23.7x faster
 ```
 
 ### Running Locally
