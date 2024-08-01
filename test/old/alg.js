@@ -4,7 +4,7 @@ import {
   linear_sRGB_to_XYZ_M,
   linear_sRGB_to_LMS_M,
   LMS_to_linear_sRGB_M,
-} from "../../src/color/conversion_matrices.js";
+} from "../../src/conversion_matrices.js";
 
 const linear_sRGB_to_LMS_M_2 = matmul(XYZ_to_LMS_M, linear_sRGB_to_XYZ_M);
 const LMS_to_linear_sRGB_M_2 = inv(linear_sRGB_to_LMS_M_2);

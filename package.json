@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "an esoteric colour picker in OKLCH",
   "type": "module",
-  "main": "index.js",
+  "main": "./src/index.js",
   "license": "MIT",
   "author": {
     "name": "Matt DesLauriers",
@@ -26,7 +26,7 @@
     "bench": "node test/bench-colorjs.js",
     "bench:node": "NODE_ENV=production node --prof --no-logfile-per-isolate test/bench-node.js && node --prof-process v8.log",
     "bench:size": "esbuild test/bench-size.js --format=esm --bundle --minify | wc -c",
-    "matrices": "python3 tools/print_matrices.py > src/color/conversion_matrices.js && prettier src/color/conversion_matrices.js --write"
+    "matrices": "python3 tools/print_matrices.py > src/conversion_matrices.js && prettier src/conversion_matrices.js --write"
   },
   "keywords": [
     "oklch",

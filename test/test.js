@@ -1,21 +1,16 @@
 import test from "tape";
+import Color from "colorjs.io";
+import arrayAlmostEqual from "./almost-equal.js";
 import {
   floatToByte,
   hexToRGB,
   isRGBInGamut,
   RGBtoHex,
-} from "../src/color/util.js";
-import {
   linear_sRGB_to_LMS_M,
   LMS_to_linear_sRGB_M,
   LMS_to_XYZ_M,
   XYZ_to_linear_sRGB_M,
   XYZ_to_LMS_M,
-} from "../src/color/conversion_matrices.js";
-import Color from "colorjs.io";
-import { mat3 } from "gl-matrix";
-import arrayAlmostEqual from "array-almost-equal";
-import {
   convert,
   OKLab,
   OKLCH,
@@ -29,15 +24,40 @@ import {
   sRGBGamut,
   OKHSV,
   serialize,
-} from "../src/color/convert.js";
-import { findCusp, gamutMapOKLCH } from "../src/color/gamut.js";
-import { degToRad } from "./old/math/util.js";
-import {
+  findCusp,
+  gamutMapOKLCH,
+  degToRad,
   okhslToOklab,
   okhsvToOklab,
   oklabToOkhsl,
   oklabToOkhsv,
-} from "../src/color/okhsl.js";
+  XYZD65ToD50,
+  XYZD50ToD65,
+  XYZD50,
+  ProPhotoRGB,
+  ProPhotoRGBLinear,
+} from "../src/index.js";
+
+import { XYZ_to_linear_ProPhotoRGB_M } from "../src/conversion_matrices.js";
+
+test("should convert XYZ in different whitepoints", async (t) => {
+  const oklab = [0.56, 0.03, -0.1];
+  const xyz_d65_input = new Color("oklab", oklab).to("xyz").coords;
+  const xyz_d50_output = new Color("xyz", xyz_d65_input).to("xyz-d50").coords;
+
+  let tmp = [0, 0, 0];
+  const out = XYZD65ToD50(xyz_d65_input, tmp);
+  t.equal(tmp, out);
+  t.deepEqual(out, xyz_d50_output);
+
+  tmp = [0, 0, 0];
+  const out2 = XYZD50ToD65(xyz_d50_output, tmp);
+  t.deepEqual(out2, xyz_d65_input);
+  t.equal(out2, tmp);
+
+  t.deepEqual(convert(xyz_d50_output, XYZD50, XYZ), xyz_d65_input);
+  t.deepEqual(convert(xyz_d65_input, XYZ, XYZD50), xyz_d50_output);
+});
 
 test("should convert", async (t) => {
   const oklab = [0.56, 0.03, -0.1];
@@ -212,6 +232,59 @@ test("utils", async (t) => {
   const tmp = [0, 0, 0];
   hexToRGB("#0080ff", tmp);
   t.deepEqual(tmp, [0, 0.5019607843137255, 1]);
+});
+
+test("should convert D65 based to D50 based color spaces", async (t) => {
+  const rgbin = [0.25, 0.5, 1];
+  const xyzD65Input = new Color("srgb", rgbin).to("xyz-d65").coords;
+  const xyzD50Input = XYZD65ToD50(xyzD65Input);
+
+  const prophotoFromXYZD65_expected = new Color("xyz-d65", xyzD65Input).to(
+    "prophoto-linear"
+  ).coords;
+
+  const ret = convert(xyzD65Input, XYZ, ProPhotoRGBLinear);
+  t.deepEqual(ret, prophotoFromXYZD65_expected);
+
+  const xyzD65 = convert(prophotoFromXYZD65_expected, ProPhotoRGBLinear, XYZ);
+  t.deepEqual(arrayAlmostEqual(xyzD65, xyzD65Input), true);
+
+  const prophoto2 = convert(rgbin, sRGB, ProPhotoRGBLinear);
+  // const prophoto2 = transform(
+  //   XYZD65ToD50(new Color("srgb", rgbin).to("xyz-d65").coords),
+  //   ProPhotoRGBLinear.fromXYZ_M
+  // );
+  const prophotoExpected = new Color("srgb", rgbin).to(
+    "prophoto-linear"
+  ).coords;
+  t.deepEqual(prophoto2, prophotoExpected);
+
+  const oklabIn = new Color("srgb", rgbin).to("oklab").coords;
+  const oklabToProphoto = new Color("oklab", oklabIn).to(
+    "prophoto-linear"
+  ).coords;
+  t.deepEqual(
+    arrayAlmostEqual(
+      convert(oklabIn, OKLab, ProPhotoRGBLinear),
+      oklabToProphoto
+    ),
+    true
+  );
+
+  const oklabIn2 = [1, 1, 1];
+  const oklabToProphoto2 = new Color("oklab", oklabIn2).to("prophoto").coords;
+
+  t.deepEqual(
+    arrayAlmostEqual(convert(oklabIn2, OKLab, ProPhotoRGB), oklabToProphoto2),
+    true
+  );
+
+  // const sRGBInput = [0.25, 0.5, 1];
+  // const prophoto_expected = new Color("srgb", sRGBInput).to("prophoto").coords;
+
+  // const out = [0, 0, 0];
+  // const ret = convert(sRGBInput, sRGB, ProPhotoRGB, out);
+  // t.deepEqual(ret, prophoto_expected);
 });
 
 function roundToNDecimals(value, digits) {

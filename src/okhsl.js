@@ -1,6 +1,7 @@
-import { OKLab_to, sRGBGamut } from "./convert.js";
-import { findCusp, findGamutIntersection, getGamutLMStoRGB } from "./gamut.js";
 import { vec3, constrainAngle as constrain } from "./util.js";
+import { OKLab_to } from "./core.js";
+import { sRGBGamut } from "./spaces.js";
+import { findCusp, findGamutIntersection, getGamutLMStoRGB } from "./gamut.js";
 
 const K1 = 0.206;
 const K2 = 0.03;

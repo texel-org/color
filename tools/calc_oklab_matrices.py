@@ -196,9 +196,11 @@ M0 = [
 
 # Calculate XYZ to LMS and LMS to XYZ using our white point.
 XYZ_TO_LMS = alg.divide(M0, alg.outer(alg.matmul(M0, xyzt_white_d65), alg.ones(3)))
+XYZD50_TO_LMS = alg.divide(M0, alg.outer(alg.matmul(M0, xyzt_white_d50), alg.ones(3)))
 
 # Calculate the inverse
 LMS_TO_XYZ = alg.inv(XYZ_TO_LMS)
+LMS_TO_XYZD50 = alg.inv(XYZD50_TO_LMS)
 
 # Calculate linear sRGB to LMS (used for Okhsl and Okhsv)
 SRGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGB_TO_XYZ)

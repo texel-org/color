@@ -1,15 +1,7 @@
 import test from "tape";
 import Color from "colorjs.io";
-import arrayAlmostEqual from "array-almost-equal";
-import {
-  convert,
-  OKLab,
-  OKLCH,
-  sRGB,
-  sRGBLinear,
-  XYZ,
-  listColorSpaces,
-} from "../src/color/convert.js";
+import arrayAlmostEqual from "./almost-equal.js";
+import { listColorSpaces, convert } from "../src/index.js";
 
 test("should approximately match colorjs.io conversions", async (t) => {
   // note: we skip okhsv/hsl as colorjs.io doesn't support in the current npm version
@@ -20,6 +12,13 @@ test("should approximately match colorjs.io conversions", async (t) => {
     [1, 0, 0],
     [0, 0, 0],
   ];
+
+  const fixName = (name) => {
+    return name
+      .replace("display-", "")
+      .replace("a98-rgb", "a98rgb")
+      .replace("prophoto-rgb", "prophoto");
+  };
 
   for (let vec of vecs) {
     for (let i = 0; i < spaces.length; i++) {
@@ -33,12 +32,8 @@ test("should approximately match colorjs.io conversions", async (t) => {
         const tmp = vec.slice();
         const expected1 = convert(vec, a, b, tmp);
 
-        const colorjsid_a = a.id
-          .replace("display-", "")
-          .replace("a98-rgb", "a98rgb");
-        const colorjsid_b = b.id
-          .replace("display-", "")
-          .replace("a98-rgb", "a98rgb");
+        const colorjsid_a = fixName(a.id);
+        const colorjsid_b = fixName(b.id);
         t.deepEqual(expected0, tmp, `${suffix} copies into`);
         t.deepEqual(expected0, expected1, `${suffix} copies into`);
         t.equal(expected1, tmp, `${suffix} copies into and returns`);
@@ -49,8 +44,13 @@ test("should approximately match colorjs.io conversions", async (t) => {
           .coords.map((n) => n || 0);
 
         if (!arrayAlmostEqual(expected0, outCoords)) {
-          console.log(suffix, vec, expected0, outCoords);
-          throw new Error("WTF");
+          console.error(
+            `\nError: %s - In (%s) Out (%s) Expected (%s)`,
+            suffix,
+            vec,
+            expected0,
+            outCoords
+          );
         }
         t.equal(arrayAlmostEqual(expected0, outCoords), true, suffix);
       }

@@ -1,5 +1,3 @@
-import { OKLab_to_LMS_M } from "./conversion_matrices.js";
-import { OKLab_to, sRGBGamut, convert, OKLCH, OKLab } from "./convert.js";
 import {
   clamp,
   degToRad,
@@ -8,6 +6,9 @@ import {
   isRGBInGamut,
   vec3,
 } from "./util.js";
+import { OKLab_to_LMS_M } from "./conversion_matrices.js";
+import { sRGBGamut, OKLCH, OKLab } from "./spaces.js";
+import { OKLab_to, convert } from "./core.js";
 
 export const MapAdaptiveGrayFn =
   (alpha = 0.05) =>
@@ -59,7 +60,7 @@ const setYZ = (v, a, b) => {
   v[2] = b;
 };
 
-export function computeMaxSaturation(a, b, lmsToRgb, okCoeff) {
+export const computeMaxSaturation = (a, b, lmsToRgb, okCoeff) => {
   // https://github.com/color-js/color.js/blob/main/src/spaces/okhsl.js
   // Finds the maximum saturation possible for a given hue that fits in RGB.
   //
@@ -134,7 +135,7 @@ export function computeMaxSaturation(a, b, lmsToRgb, okCoeff) {
   sat = sat - (f * f1) / (f1 * f1 - 0.5 * f * f2);
 
   return sat;
-}
+};
 
 export const getGamutLMStoRGB = (gamut) => {
   if (!gamut) throw new Error(`expected gamut to have { space }`);
@@ -144,7 +145,7 @@ export const getGamutLMStoRGB = (gamut) => {
   return lmsToRGB;
 };
 
-export function findCusp(a, b, gamut, out = [0, 0]) {
+export const findCusp = (a, b, gamut, out = [0, 0]) => {
   const lmsToRgb = getGamutLMStoRGB(gamut);
   const okCoeff = gamut.coefficients;
   if (!okCoeff) throw new Error("expected gamut to have { coefficients }");
@@ -163,9 +164,9 @@ export function findCusp(a, b, gamut, out = [0, 0]) {
   out[0] = L_cusp;
   out[1] = C_cusp;
   return out;
-}
+};
 
-export function findGamutIntersection(a, b, l1, c1, l0, cusp, gamut) {
+export const findGamutIntersection = (a, b, l1, c1, l0, cusp, gamut) => {
   // Finds intersection of the line.
   //
   // Defined by the following:
@@ -255,18 +256,18 @@ export function findGamutIntersection(a, b, l1, c1, l0, cusp, gamut) {
   }
 
   return t;
-}
+};
 
 /**
  * Takes any OKLCH value and maps it to fall within the given gamut.
  */
-export function gamutMapOKLCH(
+export const gamutMapOKLCH = (
   oklch,
   gamut = sRGBGamut,
   targetSpace = gamut.space,
   out = vec3(),
   mapping = MapToCuspL
-) {
+) => {
   const gamutSpace = gamut.space;
   const coeff = gamut.coefficients;
   if (!coeff || !gamutSpace) {
@@ -328,4 +329,4 @@ export function gamutMapOKLCH(
   // this is often just a linear to gamma transfer, unless another target space is specified
   convert(rgbVec, gamutSpaceBase, targetSpace, out);
   return out;
-}
+};

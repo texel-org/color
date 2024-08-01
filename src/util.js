@@ -1,7 +1,5 @@
 const GAMUT_EPSILON = 0.000075;
 
-const roundByte = (n) => clamp(Math.round(n), 0, 255);
-
 export const clamp = (value, min, max) => Math.max(Math.min(value, max), min);
 
 export const lerp = (min, max, t) => min * (1 - t) + max * t;
@@ -9,10 +7,6 @@ export const lerp = (min, max, t) => min * (1 - t) + max * t;
 export const degToRad = (n) => (n * Math.PI) / 180;
 
 export const radToDeg = (n) => (n * 180) / Math.PI;
-
-export const vec3 = () => [0, 0, 0];
-
-export const normalizeHue = (hue) => ((hue = hue % 360) < 0 ? hue + 360 : hue);
 
 export const constrainAngle = (angle) => ((angle % 360) + 360) % 360;
 
@@ -56,32 +50,6 @@ export const clampedRGB = (rgb, out = vec3()) => {
   return out;
 };
 
-// in degrees
-// export const angle_delta = (angle1, angle2) => {
-//   const diff = ((angle2 - angle1 + 180) % 360) - 180;
-//   return diff < -180 ? diff + 360 : diff;
-// };
-
-// function shortAngleDistRad(a0, a1) {
-//   var max = Math.PI * 2;
-//   var da = (a1 - a0) % max;
-//   return ((2 * da) % max) - da;
-// }
-
-// function shortAngleDistDeg(a0, a1) {
-//   var max = 360;
-//   var da = (a1 - a0) % max;
-//   return ((2 * da) % max) - da;
-// }
-
-// function lerpAngleRad(a0, a1, t) {
-//   return a0 + shortAngleDistRad(a0, a1) * t;
-// }
-
-// function lerpAngleDeg(a0, a1, t) {
-//   return radToDeg(lerpAngleRad(degToRad(a0), degToRad(a1), t));
-// }
-
 export const xyY_to_XYZ = (arg, out = vec3()) => {
   let X, Y, Z, x, y;
   x = arg[0];
@@ -117,3 +85,35 @@ export const XYZ_to_xyY = (arg, out = vec3()) => {
 };
 
 export const floatToByte = (n) => clamp(Math.round(255 * n), 0, 255);
+
+// Undocumented
+
+export const vec3 = () => [0, 0, 0];
+
+// export const normalizeHue = (hue) => ((hue = hue % 360) < 0 ? hue + 360 : hue);
+
+// in degrees
+// export const angle_delta = (angle1, angle2) => {
+//   const diff = ((angle2 - angle1 + 180) % 360) - 180;
+//   return diff < -180 ? diff + 360 : diff;
+// };
+
+// function shortAngleDistRad(a0, a1) {
+//   var max = Math.PI * 2;
+//   var da = (a1 - a0) % max;
+//   return ((2 * da) % max) - da;
+// }
+
+// function shortAngleDistDeg(a0, a1) {
+//   var max = 360;
+//   var da = (a1 - a0) % max;
+//   return ((2 * da) % max) - da;
+// }
+
+// function lerpAngleRad(a0, a1, t) {
+//   return a0 + shortAngleDistRad(a0, a1) * t;
+// }
+
+// function lerpAngleDeg(a0, a1, t) {
+//   return radToDeg(lerpAngleRad(degToRad(a0), degToRad(a1), t));
+// }

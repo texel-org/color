@@ -3,22 +3,18 @@ import {
   findCusp,
   gamutMapOKLCH,
   MapToAdaptiveCuspL,
-} from "../src/color/gamut.js";
-import {
   A98RGBGamut,
   convert,
   DisplayP3Gamut,
   OKLCH,
   Rec2020Gamut,
   sRGBGamut,
-} from "../src/color/convert.js";
-import {
+  degToRad,
   constrainAngle,
   floatToByte,
   isRGBInGamut,
-} from "../src/color/util.js";
-import { degToRad } from "../src/color/util.js";
-import arrayAlmostEqual from "array-almost-equal";
+} from "../src/index.js";
+import arrayAlmostEqual from "./almost-equal.js";
 
 const settings = {
   dimensions: [768, 768],

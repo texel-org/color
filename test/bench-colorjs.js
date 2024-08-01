@@ -7,13 +7,18 @@ import {
   listColorSpaces,
   DisplayP3Gamut,
   DisplayP3,
-} from "../src/color/convert.js";
-import { gamutMapOKLCH } from "../src/color/gamut.js";
+  gamutMapOKLCH,
+} from "../src/index.js";
+
+const fixName = (name) => {
+  return name
+    .replace("display-", "")
+    .replace("a98-rgb", "a98rgb")
+    .replace("prophoto-rgb", "prophoto");
+};
 
 const spaces = listColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
-const spacesForColorjs = spaces.map((space) => {
-  return space.id.replace("display-", "").replace("a98-rgb", "a98rgb");
-});
+const spacesForColorjs = spaces.map((s) => fixName(s.id));
 
 const vecs = Array(128 * 128)
   .fill()
@@ -30,6 +35,33 @@ const vecs = Array(128 * 128)
 const tmp = [0, 0, 0];
 
 let now, elapsedColorjs, elapsedOurs;
+
+//// OKLCH to sRGB with gamut mapping (direct path)
+
+const oklchVecs = Array(512 * 256)
+  .fill()
+  .map((_, i, lst) => {
+    const t0 = i / (lst.length - 1);
+    const t1 = i / lst.length;
+    return [t0, t0, t1 * 360];
+  });
+
+now = performance.now();
+for (let vec of oklchVecs) {
+  new Color("oklch", vec).to("srgb").toGamut({ space: "srgb", method: "css" });
+}
+elapsedColorjs = performance.now() - now;
+
+now = performance.now();
+for (let vec of oklchVecs) {
+  gamutMapOKLCH(vec, sRGBGamut, sRGB, tmp);
+}
+elapsedOurs = performance.now() - now;
+
+console.log("OKLCH to sRGB with gamut mapping --");
+console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
+console.log("Ours: %s ms", elapsedOurs.toFixed(2));
+console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
 
 //// conversions
 
@@ -56,7 +88,8 @@ for (let vec of vecs) {
   }
 }
 elapsedOurs = performance.now() - now;
-console.log("Conversion --");
+console.log();
+console.log("All Conversions --");
 console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
 console.log("Ours: %s ms", elapsedOurs.toFixed(2));
 console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
@@ -82,7 +115,8 @@ for (let vec of vecs) {
 }
 elapsedOurs = performance.now() - now;
 
-console.log("Gamut Mapping --");
+console.log();
+console.log("Conversion + Gamut Mapping --");
 console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
 console.log("Ours: %s ms", elapsedOurs.toFixed(2));
 console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));

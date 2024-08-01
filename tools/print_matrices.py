@@ -49,7 +49,7 @@ from coloraide import algebra as alg
 sys.path.insert(0, os.getcwd())
 
 # Use higher precision Oklab conversion matrix along with LMS matrix with our exact white point
-from tools.calc_oklab_matrices import xyzt_white_d65, xyzt_get_matrix, SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS, LMS_TO_XYZ # noqa: E402
+from tools.calc_oklab_matrices import xyzt_white_d65, xyzt_white_d50, xyzt_get_matrix, SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS, LMS_TO_XYZ, LMS_TO_XYZD50, XYZD50_TO_LMS # noqa: E402
 
 PRINT_DIAGS = False
 
@@ -64,37 +64,92 @@ def print_json (label, data):
   print(f'export const {label} = {str};\n')
 
 
+# RGBL_TO_XYZD50, XYZD50_TO_RGBL = xyzt_get_matrix(xyzt_white_d50, 'prophoto-rgb')
+# RGBL_TO_XYZD65, XYZD65_TO_RGBL = xyzt_get_matrix(xyzt_white_d65, 'prophoto-rgb')
+
+# D65_to_D50_M = [
+#   [1.0479297925449969, 0.022946870601609652, -0.05019226628920524],
+#   [0.02962780877005599, 0.9904344267538799, -0.017073799063418826],
+#   [-0.009243040646204504, 0.015055191490298152, 0.7518742814281371],
+# ]
+
+# D50_to_D65_M = [
+#   [0.955473421488075, -0.02309845494876471, 0.06325924320057072],
+#   [-0.0283697093338637, 1.0099953980813041, 0.021041441191917323],
+#   [0.012314014864481998, -0.020507649298898964, 1.330365926242124],
+# ]
+
+# # print_matrix('RGBL', 'XYZD50',  np.asfarray(RGBL_TO_XYZD50))
+# # print_matrix('RGBL', 'XYZD65',  np.asfarray(RGBL_TO_XYZD65))
+
+# print_matrix('XYZD50', 'RGBL', np.asfarray(XYZD50_TO_RGBL))
+# # print_matrix('XYZD65', 'RGBL', np.asfarray(XYZD65_TO_RGBL))
+
+# XYZD65_TO_RGBL_2 = alg.matmul(D50_to_D65_M, XYZD50_TO_RGBL)
+
+# print_matrix('XYZD65', 'RGBL_2',  np.asfarray(XYZD65_TO_RGBL_2))
+
+# # print("HELLO", RGBL_TO_XYZ)
+# exit()
+
 def do_calc(GAMUT = 'srgb'):
-  global SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS
+  global SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS, LMS_TO_XYZD50, XYZD50_TO_LMS
   np.set_printoptions(precision=8)
 
   var_name = 'linear_sRGB'
   if GAMUT == 'display-p3':
-    var_name = 'linear_P3'
+    var_name = 'linear_DisplayP3'
   elif GAMUT == 'rec2020':
-    var_name = 'linear_rec2020'
+    var_name = 'linear_Rec2020'
   elif GAMUT == 'a98-rgb':
     var_name = 'linear_A98RGB'
+  elif GAMUT == 'prophoto-rgb':
+    var_name = 'linear_ProPhotoRGB'
 
-  RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(xyzt_white_d65, GAMUT)
+  white = xyzt_white_d50 if GAMUT == 'prophoto-rgb' else xyzt_white_d65
+  whitepoint = 'D50' if GAMUT == 'prophoto-rgb' else 'D65'
+  RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(white, GAMUT)
 
-  # Use P3 gamut (or some other gamut)
+  if GAMUT == 'a98-rgb':
+    # convert an array of linear-light a98-rgb values to CIE XYZ
+    # http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+    # has greater numerical precision than section 4.3.5.3 of
+    # https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf
+    # but the values below were calculated from first principles
+    # from the chromaticity coordinates of R G B W
+    RGBL_TO_XYZ = [
+      [ 0.5766690429101305,   0.1855582379065463,   0.1882286462349947  ],
+      [ 0.29734497525053605,  0.6273635662554661,   0.07529145849399788 ],
+      [ 0.02703136138641234,  0.07068885253582723,  0.9913375368376388  ],
+    ]
+
+    XYZ_TO_RGBL = [
+      [  2.0415879038107465,    -0.5650069742788596,   -0.34473135077832956 ],
+      [ -0.9692436362808795,     1.8759675015077202,    0.04155505740717557 ],
+      [  0.013444280632031142,  -0.11836239223101838,   1.0151749943912054  ],
+    ]
+
   # Calculate the gamut <-> LMS matrices to adjust the working gamut
-  if GAMUT == 'rec2020':
-      # import coloraide.spaces.rec2020_linear as rec2020
-      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
-      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
-  elif GAMUT == 'display-p3':
-      # import coloraide.spaces.display_p3_linear as p3
-      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
-      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
-  elif GAMUT == 'a98-rgb':
-      # import coloraide.spaces.a98_rgb as a98rgb
-      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
-      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
-  else:
+  if GAMUT == 'srgb':
       RGBL_TO_LMS = SRGBL_TO_LMS
       LMS_TO_RGBL = LMS_TO_SRGBL
+  elif GAMUT == 'prophoto-rgb':
+      #  override from https://github.com/w3c/csswg-drafts/issues/7675
+      RGBL_TO_XYZ = [
+        [ 0.79776664490064230,  0.13518129740053308,  0.03134773412839220 ],
+        [ 0.28807482881940130,  0.71183523424187300,  0.00008993693872564 ],
+        [ 0.00000000000000000,  0.00000000000000000,  0.82510460251046020 ]
+      ]
+      XYZ_TO_RGBL = [
+        [  1.34578688164715830, -0.25557208737979464, -0.05110186497554526 ],
+        [ -0.54463070512490190,  1.50824774284514680,  0.02052744743642139 ],
+        [  0.00000000000000000,  0.00000000000000000,  1.21196754563894520 ]
+      ]
+      RGBL_TO_LMS = alg.matmul(XYZD50_TO_LMS, RGBL_TO_XYZ)
+      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
+  else:
+      RGBL_TO_LMS = alg.matmul(XYZ_TO_LMS, RGBL_TO_XYZ)
+      LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
 
   def printarray (label, arr):
     print(label, '[ ' + ', '.join([str(n) for n in arr]) + ' ]')
@@ -203,221 +258,153 @@ def do_calc(GAMUT = 'srgb'):
     (l, m, s) = to_lms_dS2(S, h)
     return LMS_TO_RGBL[2][0] * l + LMS_TO_RGBL[2][1] * m + LMS_TO_RGBL[2][2] * s
 
-  hs, Ss = np.meshgrid(np.linspace(-np.pi, np.pi, 720), np.linspace(0, 1, 200))
+  if GAMUT != 'prophoto-rgb':
+    hs, Ss = np.meshgrid(np.linspace(-np.pi, np.pi, 720), np.linspace(0, 1, 200))
 
-  Rs = to_R(Ss, hs)
-  Gs = to_G(Ss, hs)
-  Bs = to_B(Ss, hs)
+    Rs = to_R(Ss, hs)
+    Gs = to_G(Ss, hs)
+    Bs = to_B(Ss, hs)
 
-  gamut = np.minimum(Rs, np.minimum(Gs, Bs))
+    gamut = np.minimum(Rs, np.minimum(Gs, Bs))
 
-  if PRINT_DIAGS:
-      plt.imshow(np.sign(gamut), cmap='gray', vmin=0, vmax=1)
-      plt.show()
-      plt.figure()
+    r_lab = linear_srgb_to_oklab(np.array([1, 0, 0]))
+    g_lab = linear_srgb_to_oklab(np.array([0, 1, 0]))
+    b_lab = linear_srgb_to_oklab(np.array([0, 0, 1]))
 
-  r_lab = linear_srgb_to_oklab(np.array([1, 0, 0]))
-  g_lab = linear_srgb_to_oklab(np.array([0, 1, 0]))
-  b_lab = linear_srgb_to_oklab(np.array([0, 0, 1]))
+    r_h = np.arctan2(r_lab[2], r_lab[1])
+    g_h = np.arctan2(g_lab[2], g_lab[1])
+    b_h = np.arctan2(b_lab[2], b_lab[1])
 
-  r_h = np.arctan2(r_lab[2], r_lab[1])
-  g_h = np.arctan2(g_lab[2], g_lab[1])
-  b_h = np.arctan2(b_lab[2], b_lab[1])
+    r_dir = 0.5 * np.array([np.cos(b_h) + np.cos(g_h), np.sin(b_h) + np.sin(g_h)])
+    g_dir = 0.5 * np.array([np.cos(b_h) + np.cos(r_h), np.sin(b_h) + np.sin(r_h)])
+    b_dir = 0.5 * np.array([np.cos(r_h) + np.cos(g_h), np.sin(r_h) + np.sin(g_h)])
 
-  # print('R_H', r_h)
-  # print('G_H', g_h)
-  # print('B_H', b_h)
+    r_dir /= r_dir[0]** 2 + r_dir[1]** 2
+    g_dir /= g_dir[0]** 2 + g_dir[1]** 2
+    b_dir /= b_dir[0]** 2 + b_dir[1]** 2
 
-  r_dir = 0.5 * np.array([np.cos(b_h) + np.cos(g_h), np.sin(b_h) + np.sin(g_h)])
-  g_dir = 0.5 * np.array([np.cos(b_h) + np.cos(r_h), np.sin(b_h) + np.sin(r_h)])
-  b_dir = 0.5 * np.array([np.cos(r_h) + np.cos(g_h), np.sin(r_h) + np.sin(g_h)])
+    # These are coefficients to quickly test which component goes below zero first.
+    # Used like this in compute_max_saturation:
+    # if (-1.88170328f * a - 0.80936493f * b > 1) // Red component goes below zero first
 
-  r_dir /= r_dir[0]** 2 + r_dir[1]** 2
-  g_dir /= g_dir[0]** 2 + g_dir[1]** 2
-  b_dir /= b_dir[0]** 2 + b_dir[1]** 2
+    r_hs, r_Ss = np.meshgrid(np.linspace(g_h, 2 * np.pi + b_h, 200), np.linspace(0, 1, 200))
 
-  # These are coefficients to quickly test which component goes below zero first.
-  # Used like this in compute_max_saturation:
-  # if (-1.88170328f * a - 0.80936493f * b > 1) // Red component goes below zero first
+    r_Rs = to_R(r_Ss, r_hs)
 
-  # printarray('R_DIR', r_dir)
-  # printarray('G_DIR', g_dir)
-  # printarray('B_DIR', b_dir)
+    g_hs, g_Ss = np.meshgrid(np.linspace(b_h, r_h, 200), np.linspace(0, 1, 200))
 
-  r_hs, r_Ss = np.meshgrid(np.linspace(g_h, 2 * np.pi + b_h, 200), np.linspace(0, 1, 200))
+    g_Gs = to_G(g_Ss, g_hs)
 
-  r_Rs = to_R(r_Ss, r_hs)
+    b_hs, b_Ss = np.meshgrid(np.linspace(r_h, g_h, 200), np.linspace(0, 1, 200))
 
-  if PRINT_DIAGS:
-      plt.imshow(np.sign(r_Rs), cmap='gray', vmin=0, vmax=1)
-      plt.show()
-      plt.figure()
+    b_Bs = to_B(b_Ss, b_hs)
 
-  g_hs, g_Ss = np.meshgrid(np.linspace(b_h, r_h, 200), np.linspace(0, 1, 200))
+    # These are numerical fits to the edge of the chroma
+    # The resulting coefficient, x_R, x_G and x_B are used in compute_max_saturation, as values for k0
+    its = 1
 
-  g_Gs = to_G(g_Ss, g_hs)
+    resolution = 100000
 
-  if PRINT_DIAGS:
-      plt.imshow(np.sign(g_Gs), cmap='gray', vmin=0, vmax=1)
-      plt.show()
-      plt.figure()
+    h = np.linspace(g_h, 2 * np.pi + b_h, resolution)
+    a = np.cos(h)
+    b = np.sin(h)
 
-  b_hs, b_Ss = np.meshgrid(np.linspace(r_h, g_h, 200), np.linspace(0, 1, 200))
+    def e_R(x):
+      S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
+      S = np.maximum(0, S)
 
-  b_Bs = to_B(b_Ss, b_hs)
+      # optimize for solution that is easiest to solve with one step Haley's method
+      f = to_R(S, h)
+      f1 = to_R_dS(S, h)
+      f2 = to_R_dS2(S, h)
+      S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
 
-  if PRINT_DIAGS:
-      plt.imshow(np.sign(b_Bs), cmap='gray', vmin=0, vmax=1)
-      plt.show()
-      plt.figure()
+      f_ = to_R(S_1, h)
+      return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
 
-  # These are numerical fits to the edge of the chroma
-  # The resulting coefficient, x_R, x_G and x_B are used in compute_max_saturation, as values for k0
+    x_R = scipy.optimize.minimize(e_R, np.array([1.19086277, 1.76576728, 0.59662641, 0.75515197, 0.56771245])).x
 
-  its = 1
+    # printarray('R COEFF', x_R)
 
-  resolution = 100000
+    S_R = x_R[0] + x_R[1] * a + x_R[2] * b + x_R[3] * a ** 2 + x_R[4] * a * b
 
-  h = np.linspace(g_h, 2 * np.pi + b_h, resolution)
-  a = np.cos(h)
-  b = np.sin(h)
+    S_R1 = S_R
+    for i in range(0, its):
+      f = to_R(S_R1, h)
+      f1 = to_R_dS(S_R1, h)
+      f2 = to_R_dS2(S_R1, h)
+      S_R1 = S_R1 - f * f1 / (f1 ** 2 - f * f2 / (2))
 
-  def e_R(x):
-    S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
-    S = np.maximum(0, S)
+      plt.plot(S_R1, 'r')
 
-    # optimize for solution that is easiest to solve with one step Haley's method
-    f = to_R(S, h)
-    f1 = to_R_dS(S, h)
-    f2 = to_R_dS2(S, h)
-    S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
+    #####
 
-    f_ = to_R(S_1, h)
-    return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
+    h = np.linspace(b_h, r_h, resolution)
+    a = np.cos(h)
+    b = np.sin(h)
 
-  x_R = scipy.optimize.minimize(e_R, np.array([1.19086277, 1.76576728, 0.59662641, 0.75515197, 0.56771245])).x
+    def e_G(x):
+      S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
+      S = np.maximum(0, S)
 
-  # printarray('R COEFF', x_R)
+      # optimize for solution that is easiest to solve with one step Haley's method
+      f = to_G(S, h)
+      f1 = to_G_dS(S, h)
+      f2 = to_G_dS2(S, h)
+      S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
 
-  S_R = x_R[0] + x_R[1] * a + x_R[2] * b + x_R[3] * a ** 2 + x_R[4] * a * b
+      f_ = to_G(S_1, h)
+      return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
 
-  if PRINT_DIAGS:
-    plt.plot(S_R, 'r')
-    plt.figure()
-    plt.plot(to_R(S_R, h), 'r')
-    plt.figure()
+    x_G = scipy.optimize.minimize(e_G, np.array([0.73956515, -0.45954404,  0.08285427,  0.12541073, -0.14503204])).x
 
-  S_R1 = S_R
-  for i in range(0, its):
-    f = to_R(S_R1, h)
-    f1 = to_R_dS(S_R1, h)
-    f2 = to_R_dS2(S_R1, h)
-    S_R1 = S_R1 - f * f1 / (f1 ** 2 - f * f2 / (2))
+    # printarray('G COEFF', x_G)
 
-    plt.plot(S_R1, 'r')
+    S_G = x_G[0] + x_G[1] * a + x_G[2] * b + x_G[3] * a ** 2 + x_G[4] * a * b
 
-  if PRINT_DIAGS:
-    plt.figure()
-    plt.plot(to_R(S_R1, h), 'r')
-    plt.figure()
+    S_G1 = S_G
+    for i in range(0, its):
+      f = to_G(S_G1, h)
+      f1 = to_G_dS(S_G1, h)
+      f2 = to_G_dS2(S_G1, h)
+      S_G1 = S_G1 - f * f1 / (f1 ** 2 - f * f2 / (2))
+      
 
-  #####
+    #####
 
-  h = np.linspace(b_h, r_h, resolution)
-  a = np.cos(h)
-  b = np.sin(h)
+    h = np.linspace(r_h, g_h, resolution)
+    a = np.cos(h)
+    b = np.sin(h)
 
-  def e_G(x):
-    S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
-    S = np.maximum(0, S)
+    def e_B(x):
+      S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
+      S = np.maximum(0, S)
 
-    # optimize for solution that is easiest to solve with one step Haley's method
-    f = to_G(S, h)
-    f1 = to_G_dS(S, h)
-    f2 = to_G_dS2(S, h)
-    S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
+      # optimize for solution that is easiest to solve with one step Haley's method
+      f = to_B(S, h)
+      f1 = to_B_dS(S, h)
+      f2 = to_B_dS2(S, h)
+      S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
 
-    f_ = to_G(S_1, h)
-    return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
+      f_ = to_B(S_1, h)
+      return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
 
-  x_G = scipy.optimize.minimize(e_G, np.array([0.73956515, -0.45954404,  0.08285427,  0.12541073, -0.14503204])).x
+    x_B = scipy.optimize.minimize(e_B, np.array([1.35733652, -0.00915799, -1.1513021,  -0.50559606,  0.00692167])).x
 
-  # printarray('G COEFF', x_G)
+    # printarray('B COEFF', x_B)
 
-  S_G = x_G[0] + x_G[1] * a + x_G[2] * b + x_G[3] * a ** 2 + x_G[4] * a * b
+    S_B = x_B[0] + x_B[1] * a + x_B[2] * b + x_B[3] * a ** 2 + x_B[4] * a * b
 
-  if PRINT_DIAGS:
-    plt.plot(S_G, 'g')
-    plt.figure()
-    plt.plot(to_G(S_G, h), 'g')
-    plt.figure()
+    S_B1 = S_B
+    for i in range(0, its):
+      f = to_B(S_B1, h)
+      f1 = to_B_dS(S_B1, h)
+      f2 = to_B_dS2(S_B1, h)
+      S_B1 = S_B1 - f * f1 / (f1 ** 2 - f * f2 / (2))
 
-  S_G1 = S_G
-  for i in range(0, its):
-    f = to_G(S_G1, h)
-    f1 = to_G_dS(S_G1, h)
-    f2 = to_G_dS2(S_G1, h)
-    S_G1 = S_G1 - f * f1 / (f1 ** 2 - f * f2 / (2))
-    
-    if PRINT_DIAGS:
-      plt.plot(S_G1, 'g')
-
-  if PRINT_DIAGS:
-    plt.figure()
-    plt.plot(to_G(S_G1, h), 'g')
-    plt.figure()
-
-
-  #####
-
-  h = np.linspace(r_h, g_h, resolution)
-  a = np.cos(h)
-  b = np.sin(h)
-
-  def e_B(x):
-    S = x[0] + x[1] * a + x[2] * b + x[3] * a ** 2 + x[4] * a * b
-    S = np.maximum(0, S)
-
-    # optimize for solution that is easiest to solve with one step Haley's method
-    f = to_B(S, h)
-    f1 = to_B_dS(S, h)
-    f2 = to_B_dS2(S, h)
-    S_1 = S - f * f1 / (f1 ** 2 - f * f2 / 2)
-
-    f_ = to_B(S_1, h)
-    return np.average(f_ ** 10) # + f_[0] ** 2 + f_[-1] ** 2
-
-  x_B = scipy.optimize.minimize(e_B, np.array([1.35733652, -0.00915799, -1.1513021,  -0.50559606,  0.00692167])).x
-
-  # printarray('B COEFF', x_B)
-
-  S_B = x_B[0] + x_B[1] * a + x_B[2] * b + x_B[3] * a ** 2 + x_B[4] * a * b
-
-  if PRINT_DIAGS:
-    plt.plot(S_B, 'b')
-    plt.figure()
-    plt.plot(to_B(S_B, h), 'b')
-    plt.figure()
-
-  S_B1 = S_B
-  for i in range(0, its):
-    f = to_B(S_B1, h)
-    f1 = to_B_dS(S_B1, h)
-    f2 = to_B_dS2(S_B1, h)
-    S_B1 = S_B1 - f * f1 / (f1 ** 2 - f * f2 / (2))
-
-    if PRINT_DIAGS:
-      plt.plot(S_B1, 'b')
-
-  if PRINT_DIAGS:
-    plt.figure()
-    plt.plot(to_B(S_B1, h), 'b')
-    plt.figure()
-  
   print(f'// {var_name} space\n')
-  
     
-  print(f'// {var_name} to XYZ matrices\n')
+  print(f'// {var_name} to XYZ ({whitepoint}) matrices\n')
   print_matrix(var_name, 'XYZ', np.asfarray(RGBL_TO_XYZ))
   print_matrix('XYZ', var_name, np.asfarray(XYZ_TO_RGBL))
   
@@ -425,22 +412,25 @@ def do_calc(GAMUT = 'srgb'):
   print_matrix(var_name, 'LMS', RGBL_TO_LMS)
   print_matrix('LMS', var_name, LMS_TO_RGBL)
   
-  coeff = [
-    [
-      r_dir.tolist(),
-      x_R.tolist(),
-    ],
-    [
-      g_dir.tolist(),
-      x_G.tolist()
-    ],
-    [
-      b_dir.tolist(),
-      x_B.tolist()
+  if GAMUT != 'prophoto-rgb':
+    coeff = [
+      [
+        r_dir.tolist(),
+        x_R.tolist(),
+      ],
+      [
+        g_dir.tolist(),
+        x_G.tolist()
+      ],
+      [
+        b_dir.tolist(),
+        x_B.tolist()
+      ]
     ]
-  ]
-  print(f'// {var_name} coefficients for OKLab to RBG gamut approximation\n')
-  print_json(f'OKLab_to_{var_name}_coefficients', coeff)
+    print(f'// {var_name} coefficients for OKLab gamut approximation\n')
+    print_json(f'OKLab_to_{var_name}_coefficients', coeff)
+  else:
+    print(f'// {var_name} does not yet support OKLab gamut approximation\n')
 
 # print things...
 
@@ -451,5 +441,9 @@ print_matrix('LMS', 'OKLab', np.asfarray(LMS3_TO_OKLAB))
 print_matrix('XYZ', 'LMS', np.asfarray(XYZ_TO_LMS))
 print_matrix('LMS', 'XYZ', np.asfarray(LMS_TO_XYZ))
 
-for gamut in ['srgb', 'display-p3', 'rec2020', 'a98-rgb']:
+# don't need these...
+# print_matrix('XYZD50', 'LMS', np.asfarray(XYZD50_TO_LMS))
+# print_matrix('LMS', 'XYZD50', np.asfarray(LMS_TO_XYZD50))
+
+for gamut in ['srgb', 'display-p3', 'rec2020', 'a98-rgb', 'prophoto-rgb']:
   d = do_calc(gamut)

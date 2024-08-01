@@ -3,10 +3,10 @@
 A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization
-- Optimised for speed: approx 25-35 times faster than [Colorjs.io](https://colorjs.io/)
+- Optimised for speed: approx 20-100 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
 - Optimised for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
-- Optimised for compact bundles: zero dependencies, and can be automatically tree-shaked to small sizes (e.g. ~3kb minified if you only require OKLCH to sRGB conversion)
-- Optimised for accuracy: high precision color space matrices
+- Optimised for compact bundles: zero dependencies, and unused spaces can be automatically tree-shaked away for small sizes (e.g. ~3kb minified if you only require OKLCH to sRGB conversion)
+- Optimised for accuracy: [high precision](#accuracy) color space matrices
 - Focused on a minimal and modern set of color spaces:
   - oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, xyz (D65)
 
@@ -121,10 +121,18 @@ gamutMapOKLCH(oklch, sRGBGamut, sRGB, rgb, MapToL);
 Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS.
 
 ```js
+import { serialize, sRGB, DisplayP3, OKLCH } from "saido";
+
 serialize([0, 0.5, 1], sRGB); // "rgb(0, 128, 255)"
 serialize([0, 0.5, 1], DisplayP3); // "color(display-p3 0 0.5 1)"
 serialize([1, 0, 0], OKLCH, sRGB); // "rgb(255, 255, 255)"
 serialize([1, 0, 0], OKLCH); // "oklch(1 0 0)"
+```
+
+#### `delta = deltaEOK(oklchA, oklchB)`
+
+```js
+import { serialize, sRGB, DisplayP3, OKLCH } from "saido";
 ```
 
 There are also a host of other [utilities](#utilities) exported by the module.
@@ -136,18 +144,21 @@ The module exports a set of color spaces:
 ```js
 import {
   XYZ, // using D65 whitepoint
+  XYZD50, // using D50 whitepoint
   sRGB,
   sRGBLinear,
   DisplayP3,
   DisplayP3Linear,
   Rec2020,
   Rec2020Linear,
-  A98RGB,
+  A98RGB, // Adobe® 1998 RGB
   A98RGBLinear,
+  ProPhotoRGB,
+  ProPhotoRGBLinear,
   OKLab,
   OKLCH,
-  OKHSL,
-  OKHSV,
+  OKHSL, // in sRGB gamut
+  OKHSV, // in sRGB gamut
 
   // a function to list all spaces
   listColorSpaces,
@@ -183,6 +194,8 @@ console.log(listColorGamuts()); // [sRGBGamut, ...]
 console.log(sRGBGamut.space); // sRGB space
 console.log(sRGBGamut.space.id); // 'srgb'
 ```
+
+Note: ProPhoto gamut is not yet supported, I would be open to a PR fixing it within the Python script.
 
 ## Utilities
 
@@ -242,28 +255,69 @@ Converts the angle (given in degrees) to radians.
 
 Colorjs is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
 
-This library does not aim to target all color spaces; it only focuses on a limited "modern" set (i.e. OKLab is replacing the need for CIELAB), and currently only supports spaces with a D65-based whitepoint.
+There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many other libraries, for example, do not distinguish between D50 and D65 in XYZ).
 
-There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL.
+### Supported Spaces
+
+This library does not aim to target every color space; it only focuses on a limited "modern" set, i.e. OKLab and its DeltaEOK has replaced HSL, CIELab, CIEDE2000, etc for many practical purposes, allowing the library to be simpler and slimmer.
 
 ### Improvements & Techniques
 
 The module uses a few of the following practices for the significant optimization and bundle size improvements:
 
-- Loops and closures are replaced by more optimized code paths.
+- Loops, closures, destructuring, and other syntax sugars are replaced with more optimized code paths and plain array access.
 - Allocations in hot code paths have been removed, temporary arrays are re-used if needed.
 - Certain conversions, such as OKLab to sRGB, do not need to pass through XYZ first, and can be directly converted using a known matrix.
 - The API design is structured such that color spaces are generally not referenced internally, allowing them to be automatically tree-shaked.
 
-### Matrices & Tests
+### Accuracy
 
-All the conversion has been tested to approximately equal Colorjs conversions, within a very small margin ([64 bit double precision](https://www.npmjs.com/package/almost-equal)).
+All conversions have been tested to approximately equal Colorjs conversions, within a tolerance of 2<sup>-40</sup>. If you are aiming for results with higher precision accuracy than this, you should use Colorjs directly.
 
-This library uses [coloraide](https://github.com/facelessuser/coloraide) and its Python tools for computing conversion matrices and OKLab gamut approximations. In the future, some of this could be replaced by JavaScript code that computes the matrices on the fly, or hardcodes certain aspects for more precise conversions.
+This library uses [coloraide](https://github.com/facelessuser/coloraide) and its Python tools for computing conversion matrices and OKLab gamut approximations. Some matrices have been hard-coded into the script to produce more consistent outputs with Colorjs and the CSS Module 4 Spec, which this library tests against.
+
+### Benchmarks
+
+There are a few benchmarks inside [test](./test):
+
+- [bench-colorjs.js](./test/bench-colorjs.js) - run with `npm run bench` to compare against colorjs
+- [bench-node.js](./test/bench-node.js) - run with `npm run bench:node` to get a node profile
+- [bench-size.js](./test/bench-size.js) - run with `npm run bench:size` to get a small bundle size with esbuild
+
+Colorjs comparison benchmark on MacBook Air M2:
+
+```
+OKLCH to sRGB with gamut mapping --
+Colorjs: 6276.03 ms
+Ours: 61.53 ms
+Speedup: 102.0x faster
+
+All Conversions --
+Colorjs: 11030.15 ms
+Ours: 429.11 ms
+Speedup: 25.7x faster
+
+Conversion + Gamut Mapping --
+Colorjs: 2188.11 ms
+Ours: 153.79 ms
+Speedup: 14.2x faster
+```
+
+### Running Locally
+
+Clone, `npm install`, then `npm run` to list the available scripts, or `npm t` to run the tests.
 
 ### Name
 
 The name _saido_ is from the Japanese term 彩度, meaning colourfulness, chroma, or saturation.
+
+## Attributions
+
+This library was made possible due to the excellent prior work by many developers and engineers:
+
+- [Colorjs.io](https://colorjs.io)
+- [Coloraide](https://github.com/facelessuser/coloraide/)
+- [CSS Color Module Level 4 Spec](https://www.w3.org/TR/css-color-4/)
 
 ## License
 
