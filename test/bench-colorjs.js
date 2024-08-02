@@ -21,6 +21,7 @@ const fixName = (name) => {
     .replace("prophoto-rgb", "prophoto");
 };
 
+// TODO: test okhsl with latest version of colorjs
 const spaces = listColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
 const spacesForColorjs = spaces.map((s) => fixName(s.id));
 

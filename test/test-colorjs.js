@@ -20,7 +20,7 @@ test("should approximately match colorjs.io conversions", async (t) => {
     [0.153, -1.415, -0.449],
   ];
 
-  // just a further sanity check
+  // just a further sanity check, uncomment to go wild
   // for (let i = 0; i < 100; i++)
   //   vecs.push([
   //     Math.random() * 2 - 1,
