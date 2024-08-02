@@ -2,7 +2,7 @@
 
 ![generated](./test/banner.png)
 
-A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
+A minimal and modern color library for JavaScript. Especially useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization
 - Optimised for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
