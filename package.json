@@ -1,7 +1,7 @@
 {
   "name": "@texel/color",
   "version": "1.0.0",
-  "description": "an esoteric colour picker in OKLCH",
+  "description": "a minimal and modern color library",
   "type": "module",
   "main": "./src/index.js",
   "license": "MIT",
