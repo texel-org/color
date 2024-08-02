@@ -86,7 +86,7 @@ def print_matrix (a, b, arr):
 
 def print_rational (a, b, rstr):
   suffix = '_M'
-  print(f'export const {a}_to_{b}{suffix} = {rstr};\n')
+  print(f'export const {a}_to_{b}{suffix} = {eval(rstr)};\n')
 
 
 def print_json (label, data):
@@ -112,6 +112,7 @@ def do_calc(GAMUT = 'srgb'):
   RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(white, GAMUT)
 
   """
+  Hard coding the matrices using rational numbers to match CSS working draft spec.
   https://github.com/w3c/csswg-drafts/pull/7320
   https://drafts.csswg.org/css-color-4/#color-conversion-code
   """

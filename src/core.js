@@ -70,42 +70,7 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
   }
 };
 
-const convertXYZ = (out, fromBaseSpace, toBaseSpace) => {
-  // Note: if we are XYZ here, it means we're already in D65
-  if (fromBaseSpace.id === "xyz") {
-    if (!toBaseSpace.fromXYZ_M)
-      throw new Error(`no XYZ matrix on base target: ${toBaseSpace.id}`);
-    // say we are going from XYZ to ProPhoto, we first have to adapt the XYZ back to D50
-    if (toBaseSpace.adaptFrom_M)
-      out = transform(out, toBaseSpace.adaptFrom_M, out);
-    out = transform(out, toBaseSpace.fromXYZ_M, out);
-  } else if (toBaseSpace.id === "xyz") {
-    if (!fromBaseSpace.toXYZ_M)
-      throw new Error(`no XYZ matrix on base source: ${fromBaseSpace.id}`);
-    // from [base space] to XYZ
-    out = transform(out, fromBaseSpace.toXYZ_M, out);
-    // if base space is in another XYZ whitepoint, adapt it before returning
-    if (fromBaseSpace.adaptTo_M)
-      out = transform(out, fromBaseSpace.adaptTo_M, out);
-  } else if (fromBaseSpace.toXYZ_M && toBaseSpace.fromXYZ_M) {
-    // we route through XYZ D65
-    // [a] -> transform(spaceToXYZD65) -> XYZ -> (adapt) -> transform(xyzToX) -> (adapt) [b]
-    out = transform(out, fromBaseSpace.toXYZ_M, out);
-    if (toBaseSpace.adaptFrom_M)
-      out = transform(out, toBaseSpace.adaptFrom_M, out);
-    out = transform(out, toBaseSpace.fromXYZ_M, out);
-    if (fromBaseSpace.adaptTo_M)
-      out = transform(out, fromBaseSpace.adaptTo_M, out);
-  } else {
-    throw new Error(
-      `no color space conversion path for ${fromBaseSpace.id} to ${toBaseSpace.id}`
-    );
-  }
-  return out;
-};
-
 export const convert = (input, fromSpace, toSpace, out = vec3()) => {
-  const inputSpace = fromSpace;
   // place into output
   vec3Copy(input, out);
 
@@ -197,36 +162,6 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
       }
     }
   }
-
-  // const curID = fromBaseSpace.id;
-  // const toID = toBaseSpace.id;
-
-  // let isXYZ = false;
-  // if (fromBaseSpace === toBaseSpace) {
-  //   // base space is the same, we can safely skip
-  // } else if (curID === "oklab") {
-  //   // going from OKLab to another space
-  //   let mat = toBaseSpace.fromLMS_M;
-  //   if (!mat) {
-  //     mat = LMS_to_XYZ_M;
-  //     isXYZ = true;
-  //     fromBaseSpace = XYZ;
-  //   }
-  //   out = OKLab_to(out, mat, out);
-  // } else if (toID === "oklab") {
-  //   // going from [base space] to OKLab
-  //   let mat = fromBaseSpace.toLMS_M;
-  //   if (!mat) {
-  //     mat = XYZ_to_LMS_M;
-  //     isXYZ = true;
-  //   }
-  //   out = OKLab_from(out, mat, out);
-  // } else {
-  //   // not oklab based, so route through XYZ
-  //   isXYZ = true;
-  // }
-
-  // if (isXYZ) out = convertXYZ(out, fromBaseSpace, toBaseSpace);
 
   // Now do the final transformation to the target space
   // e.g. OKLab -> OKLCH or sRGBLinear -> sRGB

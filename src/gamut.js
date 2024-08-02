@@ -10,33 +10,28 @@ import { OKLab_to_LMS_M } from "./conversion_matrices.js";
 import { sRGBGamut, OKLCH, OKLab } from "./spaces.js";
 import { OKLab_to, convert } from "./core.js";
 
-export const MapAdaptiveGrayFn =
-  (alpha = 0.05) =>
-  (oklch, cusp) => {
-    const Ld = oklch[0] - cusp[0];
-    const k = 2 * (Ld > 0 ? 1 - cusp[0] : cusp[0]);
-    const e1 = 0.5 * k + Math.abs(Ld) + (alpha * oklch[1]) / k;
-    return (
-      cusp[0] +
-      0.5 * (Math.sign(Ld) * (e1 - Math.sqrt(e1 * e1 - 2 * k * Math.abs(Ld))))
-    );
-  };
-
-export const MapAdaptiveCuspLFn =
-  (alpha = 0.05) =>
-  (oklch) => {
-    const Ld = oklch[0] - 0.5;
-    const e1 = 0.5 + Math.abs(Ld) + alpha * oklch[1];
-    return (
-      0.5 * (1 + Math.sign(Ld) * (e1 - Math.sqrt(e1 * e1 - 2.0 * Math.abs(Ld))))
-    );
-  };
+const DEFAULT_ALPHA = 0.05;
 
 export const MapToL = (oklch) => oklch[0];
 export const MapToGray = () => 0.5;
 export const MapToCuspL = (_, cusp) => cusp[0];
-export const MapToAdaptiveGray = MapAdaptiveGrayFn();
-export const MapToAdaptiveCuspL = MapAdaptiveCuspLFn();
+export const MapToAdaptiveGray = (oklch, cusp) => {
+  const Ld = oklch[0] - cusp[0];
+  const k = 2 * (Ld > 0 ? 1 - cusp[0] : cusp[0]);
+  const e1 = 0.5 * k + Math.abs(Ld) + (DEFAULT_ALPHA * oklch[1]) / k;
+  return (
+    cusp[0] +
+    0.5 * (Math.sign(Ld) * (e1 - Math.sqrt(e1 * e1 - 2 * k * Math.abs(Ld))))
+  );
+};
+
+export const MapToAdaptiveCuspL = (oklch) => {
+  const Ld = oklch[0] - 0.5;
+  const e1 = 0.5 + Math.abs(Ld) + DEFAULT_ALPHA * oklch[1];
+  return (
+    0.5 * (1 + Math.sign(Ld) * (e1 - Math.sqrt(e1 * e1 - 2.0 * Math.abs(Ld))))
+  );
+};
 
 const floatMax = Number.MAX_VALUE;
 
