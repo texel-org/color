@@ -305,7 +305,7 @@ sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
 
 ### Why another library?
 
-Colorjs is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `color-tools` cusp intersection gamut mapping is ~125 times faster than the CSS spec as implemented by Colorjs).
+[Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `color-tools` cusp intersection gamut mapping is ~125 times faster than Colorjs and its defaultt CSS based gamut mapping).
 
 There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 in XYZ).
 
