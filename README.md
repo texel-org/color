@@ -1,4 +1,4 @@
-# color-tools
+# @texel/color
 
 A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
 
@@ -15,7 +15,7 @@ A minimal and modern color library for JavaScript. Mainly useful for real-time a
 Use [npm](https://npmjs.com/) to install and import the module.
 
 ```sh
-npm install color-tools --save
+npm install @texel/color --save
 ```
 
 ## Examples
@@ -23,7 +23,7 @@ npm install color-tools --save
 Converting OKLCH (cylindrical form of OKLab) to sRGB:
 
 ```js
-import { convert, OKLCH, sRGB } from "color-tools";
+import { convert, OKLCH, sRGB } from "@texel/color";
 
 // L = 0 .. 1
 // C = 0 .. 0.4
@@ -37,7 +37,7 @@ const rgb = convert([0.5, 0.15, 30], OKLCH, sRGB);
 You can also use wildcard imports:
 
 ```js
-import * as colors from "color-tools";
+import * as colors from "@texel/color";
 
 const rgb = colors.convert([0.5, 0.15, 30], colors.OKLCH, colors.sRGB);
 ```
@@ -47,7 +47,7 @@ const rgb = colors.convert([0.5, 0.15, 30], colors.OKLCH, colors.sRGB);
 Another example with gamut mapping and serialization for wide-gamut Canvas2D:
 
 ```js
-import { gamutMapOKLCH, DisplayP3Gamut, sRGBGamut, serialize } from "color-tools";
+import { gamutMapOKLCH, DisplayP3Gamut, sRGBGamut, serialize } from "@texel/color";
 
 // Some value that may or may not be in sRGB gamut
 const oklch = [ 0.15, 0.425, 30 ];
@@ -86,7 +86,7 @@ The return value is the new coordinates in the destination space; such as `[r,g,
 Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's the the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
 
 ```js
-import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "color-tools";
+import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "@texel/color";
 
 // gamut map to sRGB but return linear sRGB
 const lrgb = gamutMapOKLCH(oklch, sRGBGamut, sRGBLinear);
@@ -107,7 +107,7 @@ import {
   MapToCuspL,
   MapToAdaptiveGray,
   MapToAdaptiveCuspL,
-} from "color-tools";
+} from "@texel/color";
 
 // preserve lightness when performing sRGB gamut mapping
 const rgb = [0, 0, 0];
@@ -127,7 +127,7 @@ import {
   gamutMapOKLCH,
   degToRad,
   MapToCuspL,
-} from "color-tools";
+} from "@texel/color";
 
 const gamut = sRGBGamut;
 
@@ -150,7 +150,7 @@ The `a` and `b` can also be from OKLab coordinates, but must be normalized so `a
 Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS.
 
 ```js
-import { serialize, sRGB, DisplayP3, OKLCH } from "color-tools";
+import { serialize, sRGB, DisplayP3, OKLCH } from "@texel/color";
 
 serialize([0, 0.5, 1], sRGB); // "rgb(0, 128, 255)"
 serialize([0, 0.5, 1], DisplayP3); // "color(display-p3 0 0.5 1)"
@@ -191,7 +191,7 @@ import {
 
   // a function to list all spaces
   listColorSpaces,
-} from "color-tools";
+} from "@texel/color";
 
 console.log(listColorSpaces()); // [XYZ, sRGB, sRGBLinear, ...]
 
@@ -216,7 +216,7 @@ import {
 
   // a function to list all gamuts
   listColorGamuts,
-} from "color-tools";
+} from "@texel/color";
 
 console.log(listColorGamuts()); // [sRGBGamut, ...]
 
@@ -291,7 +291,7 @@ import {
   LMS_to_XYZ_M,
   XYZ_to_LMS_M,
   sRGB,
-} from "color-tools";
+} from "@texel/color";
 
 console.log(XYZ_to_linear_sRGB_M); // [ [a,b,c], ... ]
 OKLab_to(oklab, LMS_to_XYZ_M); // OKLab -> XYZ D65
@@ -305,7 +305,7 @@ sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
 
 ### Why another library?
 
-[Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `color-tools` cusp intersection gamut mapping is ~125 times faster than Colorjs and its defaultt CSS based gamut mapping).
+[Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and its defaultt CSS based gamut mapping).
 
 There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 whitepoints in XYZ).
 
@@ -371,4 +371,4 @@ This library was made possible due to the excellent prior work by many developer
 
 ## License
 
-MIT, see [LICENSE.md](http://github.com/mattdesl/color-tools/blob/master/LICENSE.md) for details.
+MIT, see [LICENSE.md](http://github.com/mattdesl/@texel/color/blob/master/LICENSE.md) for details.
