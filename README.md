@@ -1,5 +1,7 @@
 # @texel/color
 
+![generated](./test/banner.png)
+
 A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization

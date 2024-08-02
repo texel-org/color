@@ -15,6 +15,8 @@
     "colorjs.io": "^0.5.2",
     "esbuild": "^0.23.0",
     "faucet": "^0.0.4",
+    "pako": "^2.1.0",
+    "png-tools": "^1.0.4",
     "prettier": "^3.3.3",
     "tape": "^5.8.1",
     "terser": "^5.31.3"

@@ -10,8 +10,6 @@ import { Rec2020, Rec2020Linear, Rec2020Gamut } from "./spaces/rec2020.js";
 import { A98RGB, A98RGBLinear, A98RGBGamut } from "./spaces/a98-rgb.js";
 import { ProPhotoRGB, ProPhotoRGBLinear } from "./spaces/prophoto-rgb.js";
 
-// Explicitly re-export instead of using wildcards here
-// https://github.com/evanw/esbuild/issues/1420
 export * from "./spaces/xyz.js";
 export * from "./spaces/oklab.js";
 export * from "./spaces/srgb.js";

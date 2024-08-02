@@ -3,3 +3,4 @@ node_modules
 *.log
 .DS_Store
 __pycache__
+test/logo.png
