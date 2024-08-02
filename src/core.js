@@ -1,10 +1,5 @@
 import { floatToByte, vec3 } from "./util.js";
-import {
-  LMS_to_XYZ_M,
-  XYZ_to_LMS_M,
-  LMS_to_OKLab_M,
-  OKLab_to_LMS_M,
-} from "./conversion_matrices.js";
+import { LMS_to_OKLab_M, OKLab_to_LMS_M } from "./conversion_matrices.js";
 import { XYZ } from "./spaces.js";
 
 const tmp3 = vec3();
