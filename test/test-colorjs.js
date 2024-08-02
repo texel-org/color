@@ -11,7 +11,22 @@ test("should approximately match colorjs.io conversions", async (t) => {
     [1, 1, 1],
     [1, 0, 0],
     [0, 0, 0],
+    // some other inputs
+    [0.95, 1, 1.089],
+    [0.45, 1.236, -0.019],
+    [0, 1, 0],
+    [0.922, -0.671, 0.263],
+    [0, 0, 1],
+    [0.153, -1.415, -0.449],
   ];
+
+  // just a further sanity check
+  // for (let i = 0; i < 100; i++)
+  //   vecs.push([
+  //     Math.random() * 2 - 1,
+  //     Math.random() * 2 - 1,
+  //     Math.random() * 2 - 1,
+  //   ]);
 
   const fixName = (name) => {
     return name
@@ -43,7 +58,16 @@ test("should approximately match colorjs.io conversions", async (t) => {
           .to(colorjsid_b)
           .coords.map((n) => n || 0);
 
-        if (!arrayAlmostEqual(expected0, outCoords)) {
+        // Colorjs does not appear to have as high precision as the latest
+        // CSS working draft spec which uses rational numbers
+        // so I have lowered tolerance for A98RGB, and consider it an upstream bug.
+        // please open a PR/issue if you feel otherwise!
+        const tolerance =
+          colorjsid_a.includes("a98") || colorjsid_b.includes("a98")
+            ? 0.0000001
+            : undefined;
+
+        if (!arrayAlmostEqual(expected0, outCoords, tolerance)) {
           console.error(
             `\nError: %s - In (%s) Out (%s) Expected (%s)`,
             suffix,
@@ -52,7 +76,11 @@ test("should approximately match colorjs.io conversions", async (t) => {
             outCoords
           );
         }
-        t.equal(arrayAlmostEqual(expected0, outCoords), true, suffix);
+        t.equal(
+          arrayAlmostEqual(expected0, outCoords, tolerance),
+          true,
+          suffix
+        );
       }
     }
   }

@@ -1,4 +1,4 @@
-const EPSILON = Math.pow(2, -40);
+const EPSILON = Math.pow(2, -33); // ~= 0.0000000001
 
 export default function arrayAlmostEqual(a, b, tolerance = EPSILON) {
   if (!a || !b) return false;

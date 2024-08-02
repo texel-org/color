@@ -3,9 +3,9 @@
 A minimal and modern color library for JavaScript. Mainly useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization
-- Optimised for speed: approx 20-100 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
+- Optimised for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
 - Optimised for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
-- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3kb minified if you only require OKLCH to sRGB conversion)
+- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~4.5kb minified if you only require OKLCH to sRGB conversion)
 - Optimised for accuracy: [high precision](#accuracy) color space matrices
 - Focused on a minimal and modern set of color spaces:
   - xyz (D65), xyz-d50, oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, prophoto-rgb, prophoto-rgb-linear
@@ -37,12 +37,12 @@ const rgb = convert([0.5, 0.15, 30], OKLCH, sRGB);
 You can also use wildcard imports:
 
 ```js
-import * as color-tools from "color-tools";
+import * as colors from "color-tools";
 
-const rgb = color-tools.convert([0.5, 0.15, 30], color-tools.OKLCH, color-tools.sRGB);
+const rgb = colors.convert([0.5, 0.15, 30], colors.OKLCH, colors.sRGB);
 ```
 
-> :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~3.8kb minified bundle with esbuild.
+> :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~4.5kb minified bundle with esbuild.
 
 Another example with gamut mapping and serialization for wide-gamut Canvas2D:
 
@@ -81,7 +81,7 @@ You can pass `output`, which is a 3 dimensional vector, and the result will be s
 
 The return value is the new coordinates in the destination space; such as `[r,g,b]` if `sRGB` space is the target. Note that most spaces use normalized and unbounded coordinates; so RGB spaces are in the range 0..1 and might be out of bounds (i.e. out of gamut). It's likely you will want to combine this with `gamutMapOKLCH`, see below.
 
-#### `output = gamutMapOKLCH(oklch, gamut = sRGBGamut, targetSpace = gamut.space, out = [0, 0, 0], mapping = MapToCuspL)`
+#### `output = gamutMapOKLCH(oklch, gamut = sRGBGamut, targetSpace = gamut.space, out = [0, 0, 0], mapping = MapToCuspL, [cusp])`
 
 Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's the the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
 
@@ -113,6 +113,37 @@ import {
 const rgb = [0, 0, 0];
 gamutMapOKLCH(oklch, sRGBGamut, sRGB, rgb, MapToL);
 ```
+
+The `cusp` can also be passed as the last parameter, allowing for faster evaluation for known hues. See below for calculating the cusp.
+
+#### `LC = findCuspOKLCH(a, b, gamut, out = [0, 0])`
+
+Finds the 'cusp' of a given OKLab hue plane (denoted with normalized `a` and `b` values in OKLab space), returning the `[L, C]` (lightness and chroma). This is useful for pre-computing aspects of gamut mapping when you are working across a known hue:
+
+```js
+import {
+  sRGBGamut,
+  findCuspOKLCH,
+  gamutMapOKLCH,
+  degToRad,
+  MapToCuspL,
+} from "color-tools";
+
+const gamut = sRGBGamut;
+
+// compute cusp once for this hue
+const H = 30; // e.g. 30º hue
+const hueAngle = degToRad(H);
+const a = Math.cos(hueAngle);
+const b = Math.sin(hueAngle);
+const cuspLC = findCuspOKLCH(a, b, gamut);
+
+// ... somewhere else in your program ...
+// pass 'cusp' parameter for faster evaluation
+gamutMapOKLCH(oklch, gamut, gamut.space, out, MapToCuspL, cuspLC);
+```
+
+The `a` and `b` can also be from OKLab coordinates, but must be normalized so `a^2 + b^2 == 1`.
 
 #### `str = serialize(coords, inputSpace = sRGB, outputSpace = inputSpace)`
 
@@ -247,11 +278,33 @@ Converts the angle (given in radians) to degrees.
 
 Converts the angle (given in degrees) to radians.
 
+## Transformation Matrices
+
+You can also import the lower level functions and matrices; this may be useful for granular conversions, or for example uploading the buffers to WebGPU for compute shaders.
+
+```js
+import {
+  OKLab_to,
+  OKLab_from,
+  transform,
+  XYZ_to_linear_sRGB_M,
+  LMS_to_XYZ_M,
+  XYZ_to_LMS_M,
+  sRGB,
+} from "color-tools";
+
+OKLab_to(oklab, LMS_to_XYZ_M); // OKLab -> XYZ D65
+OKLab_from(xyzD65, XYZ_to_LMS_M); // XYZ D65 -> OKLab
+transform(xyzD65, XYZ_to_linear_sRGB_M); // XYZ D65 -> sRGBLinear
+sRGB.fromBase(in_linear_sRGB, out_sRGB); // linear to gamma transfer function
+sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
+```
+
 ## Notes
 
 ### Why another library?
 
-Colorjs is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
+Colorjs is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `color-tools` cusp intersection gamut mapping is ~125 times faster than the CSS spec as implemented by Colorjs).
 
 There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 in XYZ).
 
@@ -270,9 +323,11 @@ The module uses a few of the following practices for the significant optimizatio
 
 ### Accuracy
 
-All conversions have been tested to approximately equal Colorjs conversions, within a tolerance of 2<sup>-40</sup>. If you are aiming for results with higher precision accuracy than this, you should use Colorjs directly.
+All conversions have been tested to approximately equal Colorjs conversions, within a tolerance of 2<sup>-33</sup> (10 decimal places), in some cases it is more accurate than that.
 
-This library uses [coloraide](https://github.com/facelessuser/coloraide) and its Python tools for computing conversion matrices and OKLab gamut approximations. Some matrices have been hard-coded into the script to produce more consistent outputs with Colorjs and the CSS Module 4 Spec, which this library tests against.
+This library uses [coloraide](https://github.com/facelessuser/coloraide) and its Python tools for computing conversion matrices and OKLab gamut approximations. Some matrices have been hard-coded into the script, and rational numbers are used where possible (as [suggested](https://github.com/w3c/csswg-drafts/pull/7320) by [CSS Color Module working draft spec](https://drafts.csswg.org/css-color-4/#color-conversion-code)).
+
+If you think the matrices or accuracy could be improved, please open a PR.
 
 ### Benchmarks
 
@@ -286,19 +341,19 @@ Colorjs comparison benchmark on MacBook Air M2:
 
 ```
 OKLCH to sRGB with gamut mapping --
-Colorjs: 6477.88 ms
-Ours: 59.88 ms
-Speedup: 108.2x faster
+Colorjs: 6146.67 ms
+Ours: 46.77 ms
+Speedup: 131.4x faster
 
 All Conversions --
-Colorjs: 9861.65 ms
-Ours: 412.78 ms
-Speedup: 23.9x faster
+Colorjs: 10219.40 ms
+Ours: 431.13 ms
+Speedup: 23.7x faster
 
 Conversion + Gamut Mapping --
-Colorjs: 1886.10 ms
-Ours: 79.52 ms
-Speedup: 23.7x faster
+Colorjs: 1936.29 ms
+Ours: 82.04 ms
+Speedup: 23.6x faster
 ```
 
 ### Running Locally

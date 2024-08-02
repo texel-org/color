@@ -60,7 +60,7 @@ const setYZ = (v, a, b) => {
   v[2] = b;
 };
 
-export const computeMaxSaturation = (a, b, lmsToRgb, okCoeff) => {
+export const computeMaxSaturationOKLC = (a, b, lmsToRgb, okCoeff) => {
   // https://github.com/color-js/color.js/blob/main/src/spaces/okhsl.js
   // Finds the maximum saturation possible for a given hue that fits in RGB.
   //
@@ -145,13 +145,13 @@ export const getGamutLMStoRGB = (gamut) => {
   return lmsToRGB;
 };
 
-export const findCusp = (a, b, gamut, out = [0, 0]) => {
+export const findCuspOKLCH = (a, b, gamut, out = [0, 0]) => {
   const lmsToRgb = getGamutLMStoRGB(gamut);
   const okCoeff = gamut.coefficients;
   if (!okCoeff) throw new Error("expected gamut to have { coefficients }");
   // const lmsToRgb, okCoeff
   // First, find the maximum saturation (saturation S = C/L)
-  var S_cusp = computeMaxSaturation(a, b, lmsToRgb, okCoeff);
+  var S_cusp = computeMaxSaturationOKLC(a, b, lmsToRgb, okCoeff);
   // Convert to linear RGB to find the first point where at least one of r,g or b >= 1:
   tmp3[0] = 1;
   tmp3[1] = S_cusp * a;
@@ -166,7 +166,7 @@ export const findCusp = (a, b, gamut, out = [0, 0]) => {
   return out;
 };
 
-export const findGamutIntersection = (a, b, l1, c1, l0, cusp, gamut) => {
+export const findGamutIntersectionOKLCH = (a, b, l1, c1, l0, cusp, gamut) => {
   // Finds intersection of the line.
   //
   // Defined by the following:
@@ -266,7 +266,8 @@ export const gamutMapOKLCH = (
   gamut = sRGBGamut,
   targetSpace = gamut.space,
   out = vec3(),
-  mapping = MapToCuspL
+  mapping = MapToCuspL,
+  cusp
 ) => {
   const gamutSpace = gamut.space;
   const coeff = gamut.coefficients;
@@ -303,10 +304,18 @@ export const gamutMapOKLCH = (
     const bNorm = Math.sin(hueAngle);
 
     // choose our strategy
-    const cusp = findCusp(aNorm, bNorm, gamut, tmp2);
+    cusp = cusp || findCuspOKLCH(aNorm, bNorm, gamut, tmp2);
     const LTarget = mapping(out, cusp);
 
-    let t = findGamutIntersection(aNorm, bNorm, L, C, LTarget, cusp, gamut);
+    let t = findGamutIntersectionOKLCH(
+      aNorm,
+      bNorm,
+      L,
+      C,
+      LTarget,
+      cusp,
+      gamut
+    );
     out[0] = lerp(LTarget, L, t);
     out[1] *= t;
 

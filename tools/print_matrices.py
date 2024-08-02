@@ -49,51 +49,52 @@ from coloraide import algebra as alg
 sys.path.insert(0, os.getcwd())
 
 # Use higher precision Oklab conversion matrix along with LMS matrix with our exact white point
-from tools.calc_oklab_matrices import xyzt_white_d65, xyzt_white_d50, xyzt_get_matrix, SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS, LMS_TO_XYZ, LMS_TO_XYZD50, XYZD50_TO_LMS # noqa: E402
+from tools.calc_oklab_matrices import xyzt_white_d65, xyzt_white_d50, xyzt_get_matrix, SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, LMS_TO_XYZD50, XYZD50_TO_LMS # noqa: E402
 
 PRINT_DIAGS = False
+
+# Recalculated for consistent reference white
+# see https://github.com/w3c/csswg-drafts/issues/6642#issuecomment-943521484
+XYZ_TO_LMS = [
+	[ 0.8190224379967030, 0.3619062600528904, -0.1288737815209879 ],
+	[ 0.0329836539323885, 0.9292868615863434,  0.0361446663506424 ],
+	[ 0.0481771893596242, 0.2642395317527308,  0.6335478284694309 ],
+]
+# inverse of XYZtoLMS_M
+LMS_TO_XYZ = [
+	[  1.2268798758459243, -0.5578149944602171,  0.2813910456659647 ],
+	[ -0.0405757452148008,  1.1122868032803170, -0.0717110580655164 ],
+	[ -0.0763729366746601, -0.4214933324022432,  1.5869240198367816 ],
+]
+LMS3_TO_OKLAB = [
+	[ 0.2104542683093140,  0.7936177747023054, -0.0040720430116193 ],
+	[ 1.9779985324311684, -2.4285922420485799,  0.4505937096174110 ],
+	[ 0.0259040424655478,  0.7827717124575296, -0.8086757549230774 ],
+]
+# LMStoIab_M inverted
+OKLAB_TO_LMS3 = [
+	[ 1.0000000000000000,  0.3963377773761749,  0.2158037573099136 ],
+	[ 1.0000000000000000, -0.1055613458156586, -0.0638541728258133 ],
+	[ 1.0000000000000000, -0.0894841775298119, -1.2914855480194092 ],
+]
+
 
 def print_matrix (a, b, arr):
   data = json.dumps(arr.tolist(), indent=2, separators=(',', ': '))
   suffix = '_M'
   print(f'export const {a}_to_{b}{suffix} = {data};\n')
 
+def print_rational (a, b, rstr):
+  suffix = '_M'
+  print(f'export const {a}_to_{b}{suffix} = {rstr};\n')
+
 
 def print_json (label, data):
   str = json.dumps(data, indent=2, separators=(',', ': '))
   print(f'export const {label} = {str};\n')
 
-
-# RGBL_TO_XYZD50, XYZD50_TO_RGBL = xyzt_get_matrix(xyzt_white_d50, 'prophoto-rgb')
-# RGBL_TO_XYZD65, XYZD65_TO_RGBL = xyzt_get_matrix(xyzt_white_d65, 'prophoto-rgb')
-
-# D65_to_D50_M = [
-#   [1.0479297925449969, 0.022946870601609652, -0.05019226628920524],
-#   [0.02962780877005599, 0.9904344267538799, -0.017073799063418826],
-#   [-0.009243040646204504, 0.015055191490298152, 0.7518742814281371],
-# ]
-
-# D50_to_D65_M = [
-#   [0.955473421488075, -0.02309845494876471, 0.06325924320057072],
-#   [-0.0283697093338637, 1.0099953980813041, 0.021041441191917323],
-#   [0.012314014864481998, -0.020507649298898964, 1.330365926242124],
-# ]
-
-# # print_matrix('RGBL', 'XYZD50',  np.asfarray(RGBL_TO_XYZD50))
-# # print_matrix('RGBL', 'XYZD65',  np.asfarray(RGBL_TO_XYZD65))
-
-# print_matrix('XYZD50', 'RGBL', np.asfarray(XYZD50_TO_RGBL))
-# # print_matrix('XYZD65', 'RGBL', np.asfarray(XYZD65_TO_RGBL))
-
-# XYZD65_TO_RGBL_2 = alg.matmul(D50_to_D65_M, XYZD50_TO_RGBL)
-
-# print_matrix('XYZD65', 'RGBL_2',  np.asfarray(XYZD65_TO_RGBL_2))
-
-# # print("HELLO", RGBL_TO_XYZ)
-# exit()
-
 def do_calc(GAMUT = 'srgb'):
-  global SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZ_TO_LMS, LMS_TO_XYZD50, XYZD50_TO_LMS
+  global SRGBL_TO_LMS, LMS_TO_SRGBL, LMS3_TO_OKLAB, OKLAB_TO_LMS3, XYZD50_TO_LMS, LMS_TO_XYZD50, XYZD50_TO_LMS
   np.set_printoptions(precision=8)
 
   var_name = 'linear_sRGB'
@@ -110,41 +111,92 @@ def do_calc(GAMUT = 'srgb'):
   whitepoint = 'D50' if GAMUT == 'prophoto-rgb' else 'D65'
   RGBL_TO_XYZ, XYZ_TO_RGBL = xyzt_get_matrix(white, GAMUT)
 
-  if GAMUT == 'a98-rgb':
+  """
+  https://github.com/w3c/csswg-drafts/pull/7320
+  https://drafts.csswg.org/css-color-4/#color-conversion-code
+  """
+  RGBL_TO_XYZ_RATIONAL = ""
+  XYZ_TO_RGBL_RATIONAL = ""
+  
+  if GAMUT == 'srgb':
+    RGBL_TO_XYZ_RATIONAL = """[
+  [ 506752 / 1228815,  87881 / 245763,   12673 /   70218 ],
+  [  87098 /  409605, 175762 / 245763,   12673 /  175545 ],
+  [   7918 /  409605,  87881 / 737289, 1001167 / 1053270 ],
+]"""
+    XYZ_TO_RGBL_RATIONAL = """[
+  [   12831 /   3959,    -329 /    214, -1974 /   3959 ],
+  [ -851781 / 878810, 1648619 / 878810, 36519 / 878810 ],
+  [     705 /  12673,   -2585 /  12673,   705 /    667 ],
+]"""
+  elif GAMUT == 'rec2020':
+    RGBL_TO_XYZ_RATIONAL = """[
+  [ 63426534 / 99577255,  20160776 / 139408157,  47086771 / 278816314 ],
+  [ 26158966 / 99577255, 472592308 / 697040785,   8267143 / 139408157 ],
+  [        0 /        1,  19567812 / 697040785, 295819943 / 278816314 ],
+]"""
+    XYZ_TO_RGBL_RATIONAL = """[
+  [  30757411 / 17917100, -6372589 / 17917100, -4539589 / 17917100 ],
+  [ -19765991 / 29648200, 47925759 / 29648200,   467509 / 29648200 ],
+  [    792561 / 44930125, -1921689 / 44930125, 42328811 / 44930125 ],
+]"""
+  elif GAMUT == 'a98-rgb':
     # convert an array of linear-light a98-rgb values to CIE XYZ
     # http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
     # has greater numerical precision than section 4.3.5.3 of
     # https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf
     # but the values below were calculated from first principles
     # from the chromaticity coordinates of R G B W
+    RGBL_TO_XYZ_RATIONAL = """[
+  [ 573536 /  994567,  263643 / 1420810,  187206 /  994567 ],
+  [ 591459 / 1989134, 6239551 / 9945670,  374412 / 4972835 ],
+  [  53769 / 1989134,  351524 / 4972835, 4929758 / 4972835 ],
+]"""
+    XYZ_TO_RGBL_RATIONAL = """[
+  [ 1829569 /  896150, -506331 /  896150, -308931 /  896150 ],
+  [ -851781 /  878810, 1648619 /  878810,   36519 /  878810 ],
+  [   16779 / 1248040, -147721 / 1248040, 1266979 / 1248040 ],
+]"""
+  elif GAMUT == 'display-p3':
+    # TODO: Evaluate whether this is really superior to what coloraide suggests
+    # Right now it is needed to ensure accuracy with Colorjs.io
+    # However, it is not clear how they have computed the results
+    RGBL_TO_XYZ_RATIONAL = """[
+  [ 608311 / 1250200, 189793 / 714400,  198249 / 1000160 ],
+  [  35783 /  156275, 247089 / 357200,  198249 / 2500400 ],
+  [      0 /       1,  32229 / 714400, 5220557 / 5000800 ],
+]"""
+    XYZ_TO_RGBL_RATIONAL = """[
+  [ 446124 / 178915, -333277 / 357830, -72051 / 178915 ],
+  [ -14852 /  17905,   63121 /  35810,    423 /  17905 ],
+  [  11844 / 330415,  -50337 / 660830, 316169 / 330415 ],
+]"""
+  elif GAMUT == 'prophoto-rgb':
+    #  override from https://github.com/w3c/csswg-drafts/issues/7675
+    # rational form exceeds JavaScript precision:
+    # https://github.com/w3c/csswg-drafts/pull/7320
     RGBL_TO_XYZ = [
-      [ 0.5766690429101305,   0.1855582379065463,   0.1882286462349947  ],
-      [ 0.29734497525053605,  0.6273635662554661,   0.07529145849399788 ],
-      [ 0.02703136138641234,  0.07068885253582723,  0.9913375368376388  ],
+      [ 0.79776664490064230,  0.13518129740053308,  0.03134773412839220 ],
+      [ 0.28807482881940130,  0.71183523424187300,  0.00008993693872564 ],
+      [ 0.00000000000000000,  0.00000000000000000,  0.82510460251046020 ]
     ]
-
     XYZ_TO_RGBL = [
-      [  2.0415879038107465,    -0.5650069742788596,   -0.34473135077832956 ],
-      [ -0.9692436362808795,     1.8759675015077202,    0.04155505740717557 ],
-      [  0.013444280632031142,  -0.11836239223101838,   1.0151749943912054  ],
+      [  1.34578688164715830, -0.25557208737979464, -0.05110186497554526 ],
+      [ -0.54463070512490190,  1.50824774284514680,  0.02052744743642139 ],
+      [  0.00000000000000000,  0.00000000000000000,  1.21196754563894520 ]
     ]
 
+  if len(XYZ_TO_RGBL_RATIONAL) > 0:
+    XYZ_TO_RGBL = eval(XYZ_TO_RGBL_RATIONAL)
+  if len(RGBL_TO_XYZ_RATIONAL) > 0:
+    RGBL_TO_XYZ = eval(RGBL_TO_XYZ_RATIONAL)
+    
   # Calculate the gamut <-> LMS matrices to adjust the working gamut
   if GAMUT == 'srgb':
       RGBL_TO_LMS = SRGBL_TO_LMS
       LMS_TO_RGBL = LMS_TO_SRGBL
   elif GAMUT == 'prophoto-rgb':
-      #  override from https://github.com/w3c/csswg-drafts/issues/7675
-      RGBL_TO_XYZ = [
-        [ 0.79776664490064230,  0.13518129740053308,  0.03134773412839220 ],
-        [ 0.28807482881940130,  0.71183523424187300,  0.00008993693872564 ],
-        [ 0.00000000000000000,  0.00000000000000000,  0.82510460251046020 ]
-      ]
-      XYZ_TO_RGBL = [
-        [  1.34578688164715830, -0.25557208737979464, -0.05110186497554526 ],
-        [ -0.54463070512490190,  1.50824774284514680,  0.02052744743642139 ],
-        [  0.00000000000000000,  0.00000000000000000,  1.21196754563894520 ]
-      ]
+      # Note: this is not currently used in the final results as ProPhoto gamut is not yet supported
       RGBL_TO_LMS = alg.matmul(XYZD50_TO_LMS, RGBL_TO_XYZ)
       LMS_TO_RGBL = alg.inv(RGBL_TO_LMS)
   else:
@@ -405,8 +457,15 @@ def do_calc(GAMUT = 'srgb'):
   print(f'// {var_name} space\n')
     
   print(f'// {var_name} to XYZ ({whitepoint}) matrices\n')
-  print_matrix(var_name, 'XYZ', np.asfarray(RGBL_TO_XYZ))
-  print_matrix('XYZ', var_name, np.asfarray(XYZ_TO_RGBL))
+  if len(RGBL_TO_XYZ_RATIONAL) > 0:
+    print_rational(var_name, 'XYZ', RGBL_TO_XYZ_RATIONAL)
+  else:
+    print_matrix(var_name, 'XYZ', np.asfarray(RGBL_TO_XYZ))
+
+  if len(XYZ_TO_RGBL_RATIONAL) > 0:
+    print_rational('XYZ', var_name, XYZ_TO_RGBL_RATIONAL)
+  else:
+    print_matrix('XYZ', var_name, np.asfarray(XYZ_TO_RGBL))
   
   print(f'// {var_name} to LMS matrices\n')
   print_matrix(var_name, 'LMS', RGBL_TO_LMS)

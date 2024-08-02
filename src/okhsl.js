@@ -1,7 +1,11 @@
 import { vec3, constrainAngle as constrain } from "./util.js";
 import { OKLab_to } from "./core.js";
 import { sRGBGamut } from "./spaces.js";
-import { findCusp, findGamutIntersection, getGamutLMStoRGB } from "./gamut.js";
+import {
+  findCuspOKLCH,
+  findGamutIntersectionOKLCH,
+  getGamutLMStoRGB,
+} from "./gamut.js";
 
 const K1 = 0.206;
 const K2 = 0.03;
@@ -85,7 +89,7 @@ const computeStMid = (a, b, out) => {
 
 const getCs = (l, a, b, cusp, gamut) => {
   // Get Cs
-  let cMax = findGamutIntersection(a, b, l, 1, l, cusp, gamut);
+  let cMax = findGamutIntersectionOKLCH(a, b, l, 1, l, cusp, gamut);
   let stMax = tmp2A;
   computeSt(cusp, stMax);
 
@@ -112,9 +116,11 @@ const getCs = (l, a, b, cusp, gamut) => {
   return [c0, cMid, cMax];
 };
 
-export const okhslToOklab = (hsl, gamut = sRGBGamut, out = vec3()) => {
+export const OKHSLToOKLab = (hsl, gamut = sRGBGamut, out = vec3()) => {
   // Convert Okhsl to Oklab.
-  let [h, s, l] = hsl;
+  let h = hsl[0],
+    s = hsl[1],
+    l = hsl[2];
   let L = toeInv(l);
   let a = 0;
   let b = 0;
@@ -124,8 +130,11 @@ export const okhslToOklab = (hsl, gamut = sRGBGamut, out = vec3()) => {
     let a_ = Math.cos(tau * h);
     let b_ = Math.sin(tau * h);
 
-    const cusp = findCusp(a_, b_, gamut, tmp2Cusp);
-    let [c0, cMid, cMax] = getCs(L, a_, b_, cusp, gamut);
+    const cusp = findCuspOKLCH(a_, b_, gamut, tmp2Cusp);
+    let Cs = getCs(L, a_, b_, cusp, gamut);
+    let c0 = Cs[0],
+      cMid = Cs[1],
+      cMax = Cs[2];
 
     // Interpolate the three values for C so that:
     // ```
@@ -162,7 +171,7 @@ export const okhslToOklab = (hsl, gamut = sRGBGamut, out = vec3()) => {
   return out;
 };
 
-export const oklabToOkhsl = (lab, gamut = sRGBGamut, out = vec3()) => {
+export const OKLabToOKHSL = (lab, gamut = sRGBGamut, out = vec3()) => {
   // Oklab to Okhsl.
 
   // Epsilon for lightness should approach close to 32 bit lightness
@@ -181,8 +190,11 @@ export const oklabToOkhsl = (lab, gamut = sRGBGamut, out = vec3()) => {
     let a_ = lab[1] / c;
     let b_ = lab[2] / c;
 
-    const cusp = findCusp(a_, b_, gamut, tmp2Cusp);
-    let [c0, cMid, cMax] = getCs(L, a_, b_, cusp, gamut);
+    const cusp = findCuspOKLCH(a_, b_, gamut, tmp2Cusp);
+    let Cs = getCs(L, a_, b_, cusp, gamut);
+    let c0 = Cs[0],
+      cMid = Cs[1],
+      cMax = Cs[2];
 
     let mid = 0.8;
     let midInv = 1.25;
@@ -222,10 +234,12 @@ export const oklabToOkhsl = (lab, gamut = sRGBGamut, out = vec3()) => {
   return out;
 };
 
-export const okhsvToOklab = (hsv, gamut = sRGBGamut, out = vec3()) => {
+export const OKHSVToOKLab = (hsv, gamut = sRGBGamut, out = vec3()) => {
   // Convert from Okhsv to Oklab."""
 
-  let [h, s, v] = hsv;
+  let h = hsv[0],
+    s = hsv[1],
+    v = hsv[2];
   h = constrain(h) / 360.0;
 
   let l = toeInv(v);
@@ -238,7 +252,7 @@ export const okhsvToOklab = (hsv, gamut = sRGBGamut, out = vec3()) => {
     let b_ = Math.sin(tau * h);
 
     const lmsToRgb = getGamutLMStoRGB(gamut);
-    const cusp = findCusp(a_, b_, gamut, tmp2Cusp);
+    const cusp = findCuspOKLCH(a_, b_, gamut, tmp2Cusp);
     computeSt(cusp, tmp2A);
     const sMax = tmp2A[0];
     const tMax = tmp2A[1];
@@ -274,7 +288,7 @@ export const okhsvToOklab = (hsv, gamut = sRGBGamut, out = vec3()) => {
   return out;
 };
 
-export const oklabToOkhsv = (lab, gamut = sRGBGamut, out = vec3()) => {
+export const OKLabToOKHSV = (lab, gamut = sRGBGamut, out = vec3()) => {
   // Oklab to Okhsv.
   const lmsToRgb = getGamutLMStoRGB(gamut);
 
@@ -290,7 +304,7 @@ export const oklabToOkhsv = (lab, gamut = sRGBGamut, out = vec3()) => {
     let a_ = lab[1] / c;
     let b_ = lab[2] / c;
 
-    const cusp = findCusp(a_, b_, gamut, tmp2Cusp);
+    const cusp = findCuspOKLCH(a_, b_, gamut, tmp2Cusp);
     computeSt(cusp, tmp2A);
     const sMax = tmp2A[0];
     const tMax = tmp2A[1];

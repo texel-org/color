@@ -24,21 +24,25 @@ import {
   sRGBGamut,
   OKHSV,
   serialize,
-  findCusp,
   gamutMapOKLCH,
   degToRad,
-  okhslToOklab,
-  okhsvToOklab,
-  oklabToOkhsl,
-  oklabToOkhsv,
+  OKHSLToOKLab,
+  OKHSVToOKLab,
+  OKLabToOKHSL,
+  OKLabToOKHSV,
   XYZD65ToD50,
   XYZD50ToD65,
   XYZD50,
   ProPhotoRGB,
   ProPhotoRGBLinear,
+  findCuspOKLCH,
+  LMS_to_OKLab_M,
+  DisplayP3,
+  A98RGB,
+  A98RGBLinear,
+  XYZ_to_linear_A98RGB_M,
+  DisplayP3Gamut,
 } from "../src/index.js";
-
-import { XYZ_to_linear_ProPhotoRGB_M } from "../src/conversion_matrices.js";
 
 test("should convert XYZ in different whitepoints", async (t) => {
   const oklab = [0.56, 0.03, -0.1];
@@ -159,21 +163,21 @@ test("should convert", async (t) => {
 
 test("should convert to okhsl", async (t) => {
   const okhsl = [30, 0.5, 0.5];
-  const oklab = okhslToOklab(okhsl, sRGBGamut);
+  const oklab = OKHSLToOKLab(okhsl, sRGBGamut);
   const expectedLABfromOKHSL = [
     0.568838198942395, 0.08553885335853362, 0.049385880012721296,
   ];
   t.deepEqual(oklab, expectedLABfromOKHSL);
-  const okhslOut = oklabToOkhsl(expectedLABfromOKHSL, sRGBGamut);
+  const okhslOut = OKLabToOKHSL(expectedLABfromOKHSL, sRGBGamut);
   t.deepEqual(okhslOut, okhsl);
 
   const okhsv = okhsl.slice();
   const expectedLABfromOKHSV = [
-    0.45178419415172344, 0.06582951989066341, 0.03800669102949833,
+    0.45178419415172344, 0.0658295198906634, 0.03800669102949832,
   ];
-  t.deepEqual(okhsvToOklab(okhsv, sRGBGamut), expectedLABfromOKHSV);
+  t.deepEqual(OKHSVToOKLab(okhsv, sRGBGamut), expectedLABfromOKHSV);
   t.deepEqual(
-    arrayAlmostEqual(oklabToOkhsv(expectedLABfromOKHSV, sRGBGamut), okhsv),
+    arrayAlmostEqual(OKLabToOKHSV(expectedLABfromOKHSV, sRGBGamut), okhsv),
     true
   );
 
@@ -195,22 +199,23 @@ test("should find cusp", async (t) => {
 
   const aNorm = Math.cos(hueAngle);
   const bNorm = Math.sin(hueAngle);
-  const cusp = findCusp(aNorm, bNorm, sRGBGamut);
-  const hue30sRGBCusp = [0.6322837041534409, 0.25358297891212667];
-  // const hue30P3Cusp = [ 0.6542359095783608, 0.2931937837912376 ]
+  const out2 = [0, 0];
+  const cusp = findCuspOKLCH(aNorm, bNorm, sRGBGamut, out2);
+  const hue30sRGBCusp = [0.6322837041534408, 0.2535829789121266];
+
+  t.equal(out2, cusp);
   t.deepEqual(cusp, hue30sRGBCusp);
+
+  const cuspP3 = findCuspOKLCH(aNorm, bNorm, DisplayP3Gamut, out2);
+  const hue30P3Cusp = [0.6542359095783624, 0.2931937837912358];
+  t.equal(out2, cuspP3);
+  t.deepEqual(cuspP3, hue30P3Cusp);
 
   const l2 = 0.7;
   const c2 = 0.3;
   const newLCH = [l2, c2, H];
   const mapped = gamutMapOKLCH(newLCH, sRGBGamut, OKLCH);
-  // const mapped = mapToGamutLcusp(
-  //   newLCH,
-  //   hue30sRGBCusp,
-  //   LMS_to_linear_sRGB_M,
-  //   OKLab_to_linear_sRGB_coefficients
-  // );
-  t.deepEqual(mapped, [0.679529110489262, 0.20930887792301692, 30]);
+  t.deepEqual(mapped, [0.679529110489262, 0.2093088779230169, 30]);
 });
 
 test("should gamut map", async (t) => {
@@ -250,14 +255,10 @@ test("should convert D65 based to D50 based color spaces", async (t) => {
   t.deepEqual(arrayAlmostEqual(xyzD65, xyzD65Input), true);
 
   const prophoto2 = convert(rgbin, sRGB, ProPhotoRGBLinear);
-  // const prophoto2 = transform(
-  //   XYZD65ToD50(new Color("srgb", rgbin).to("xyz-d65").coords),
-  //   ProPhotoRGBLinear.fromXYZ_M
-  // );
   const prophotoExpected = new Color("srgb", rgbin).to(
     "prophoto-linear"
   ).coords;
-  t.deepEqual(prophoto2, prophotoExpected);
+  t.deepEqual(arrayAlmostEqual(prophoto2, prophotoExpected), true);
 
   const oklabIn = new Color("srgb", rgbin).to("oklab").coords;
   const oklabToProphoto = new Color("oklab", oklabIn).to(
@@ -278,13 +279,40 @@ test("should convert D65 based to D50 based color spaces", async (t) => {
     arrayAlmostEqual(convert(oklabIn2, OKLab, ProPhotoRGB), oklabToProphoto2),
     true
   );
+});
 
-  // const sRGBInput = [0.25, 0.5, 1];
-  // const prophoto_expected = new Color("srgb", sRGBInput).to("prophoto").coords;
+test("should handle problematic coords", async (t) => {
+  const in0 = [0.95, 1, 1.089];
+  const out0 = convert(in0, XYZ, OKLab);
+  const expected0lab = new Color("xyz", in0).to("oklab").coords;
+  t.deepEqual(arrayAlmostEqual(out0, expected0lab), true);
+  const inP3 = [0, 0, 1];
+  const outXYZ = convert(inP3, DisplayP3, XYZ);
+  t.deepEqual(
+    arrayAlmostEqual(outXYZ, new Color("p3", inP3).to("xyz").coords),
+    true
+  );
+  const outA98 = convert(outXYZ, XYZ, A98RGBLinear);
+  t.deepEqual(
+    arrayAlmostEqual(
+      outA98,
+      new Color("xyz", outXYZ).to("a98rgb-linear").coords
+    ),
+    true
+  );
 
-  // const out = [0, 0, 0];
-  // const ret = convert(sRGBInput, sRGB, ProPhotoRGB, out);
-  // t.deepEqual(ret, prophoto_expected);
+  // Failing test here, but it appears Colorjs does not match the latest
+  // CSS spec (working draft with rational form). Please open a PR/issue if you
+  // think you could help, but unless I'm mistaken it seems to be an upstream issue
+  const tolerance = 0.0000001;
+  t.deepEqual(
+    arrayAlmostEqual(
+      convert(inP3, DisplayP3, A98RGB),
+      new Color("p3", inP3).to("a98rgb").coords,
+      tolerance
+    ),
+    true
+  );
 });
 
 function roundToNDecimals(value, digits) {

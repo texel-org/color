@@ -1,6 +1,6 @@
 import canvasSketch from "canvas-sketch";
 import {
-  findCusp,
+  findCuspOKLCH,
   gamutMapOKLCH,
   MapToAdaptiveCuspL,
   A98RGBGamut,
@@ -88,7 +88,7 @@ const sketch = ({ width, height }) => {
     const b = Math.sin(hueAngle);
 
     for (let { gamut: dispGamut, defaultColor } of gamuts) {
-      const gamutCusp = findCusp(a, b, dispGamut);
+      const gamutCusp = findCuspOKLCH(a, b, dispGamut);
       const gamutTri = [A, gamutCusp, B];
       drawLCTriangle(
         context,
