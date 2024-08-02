@@ -373,4 +373,4 @@ This library was made possible due to the excellent prior work by many developer
 
 ## License
 
-MIT, see [LICENSE.md](http://github.com/mattdesl/@texel/color/blob/master/LICENSE.md) for details.
+MIT, see [LICENSE.md](https://github.com/texel-org/color/blob/main/LICENSE.md) for details.
