@@ -5,7 +5,7 @@ A minimal and modern color library for JavaScript. Mainly useful for real-time a
 - Features: fast color conversion, color difference, gamut mapping, and serialization
 - Optimised for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
 - Optimised for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
-- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~4.5kb minified if you only require OKLCH to sRGB conversion)
+- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3.5kb minified if you only require OKLCH to sRGB conversion)
 - Optimised for accuracy: [high precision](#accuracy) color space matrices
 - Focused on a minimal and modern set of color spaces:
   - xyz (D65), xyz-d50, oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, prophoto-rgb, prophoto-rgb-linear
@@ -42,7 +42,7 @@ import * as colors from "@texel/color";
 const rgb = colors.convert([0.5, 0.15, 30], colors.OKLCH, colors.sRGB);
 ```
 
-> :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~4.5kb minified bundle with esbuild.
+> :bulb: Modern bundlers (esbuild, vite) will apply tree-shaking and remove any features that aren't needed, such as color spaces and gamut mapping functions that you didn't reference in your code. The above script results in a ~3.5kb minified bundle with esbuild.
 
 Another example with gamut mapping and serialization for wide-gamut Canvas2D:
 
