@@ -293,6 +293,7 @@ import {
   sRGB,
 } from "color-tools";
 
+console.log(XYZ_to_linear_sRGB_M); // [ [a,b,c], ... ]
 OKLab_to(oklab, LMS_to_XYZ_M); // OKLab -> XYZ D65
 OKLab_from(xyzD65, XYZ_to_LMS_M); // XYZ D65 -> OKLab
 transform(xyzD65, XYZ_to_linear_sRGB_M); // XYZ D65 -> sRGBLinear
