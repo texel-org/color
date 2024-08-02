@@ -5,10 +5,10 @@
 A minimal and modern color library for JavaScript. Especially useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization
-- Optimised for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
-- Optimised for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
-- Optimised for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3.5kb minified if you only require OKLCH to sRGB conversion)
-- Optimised for accuracy: [high precision](#accuracy) color space matrices
+- Optimized for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
+- Optimized for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
+- Optimized for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3.5kb minified if you only require OKLCH to sRGB conversion)
+- Optimized for accuracy: [high precision](#accuracy) color space matrices
 - Focused on a minimal and modern set of color spaces:
   - xyz (D65), xyz-d50, oklab, oklch, okhsv, okhsl, srgb, srgb-linear, display-p3, display-p3-linear, rec2020, rec2020-linear, a98-rgb, a98-rgb-linear, prophoto-rgb, prophoto-rgb-linear
 
