@@ -293,6 +293,8 @@ import {
   LMS_to_XYZ_M,
   XYZ_to_LMS_M,
   sRGB,
+  OKHSLToOKLab,
+  DisplayP3Gamut,
 } from "@texel/color";
 
 console.log(XYZ_to_linear_sRGB_M); // [ [a,b,c], ... ]
@@ -301,6 +303,10 @@ OKLab_from(xyzD65, XYZ_to_LMS_M); // XYZ D65 -> OKLab
 transform(xyzD65, XYZ_to_linear_sRGB_M); // XYZ D65 -> sRGBLinear
 sRGB.fromBase(in_linear_sRGB, out_sRGB); // linear to gamma transfer function
 sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
+
+// OKHSL in a non-sRGB gamut
+// also see OKHSVToOKLab and their inverse functions
+OKHSLToOKLab([h, s, l], DisplayP3Gamut, optionalOut);
 ```
 
 ## Notes
