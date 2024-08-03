@@ -19,6 +19,8 @@ import {
 import { p3, toGamut, oklch, okhsl, converter } from "culori";
 
 const N = 256 * 256;
+const gamut = DisplayP3Gamut;
+const target = gamut.space;
 
 // get N OKLCH in-gamut pixels by sampling uniformly from OKHSL cube
 const oklchPixelsInGamut = Array(N)
@@ -27,8 +29,8 @@ const oklchPixelsInGamut = Array(N)
     const t = i / (lst.length - 1);
     // note if we use the standard OKHSL space, it is bound to sRGB gamut...
     // so instead we use the OKHSLToOKLab function and pass P3 gamut
-    const okhsl = [t, t, t * 360];
-    const oklab = OKHSLToOKLab(okhsl, DisplayP3Gamut);
+    const okhsl = [t * 360, t, t];
+    const oklab = OKHSLToOKLab(okhsl, gamut);
     return convert(oklab, OKLab, OKLCH);
   });
 
@@ -44,12 +46,34 @@ const toP3Gamut = toGamut("p3", "oklch");
 // same perf as p3() it seems
 // const p3Converter = converter("p3");
 
-test(oklchPixelsInGamut, "Random Samling in P3 Gamut");
-test(oklchPixelsRandom, "Random Samling in OKLab L Planes");
+test(oklchPixelsInGamut, "Random Sampling in P3 Gamut");
+test(oklchPixelsRandom, "Random Sampling in OKLab L Planes");
+test(oklchPixelsRandom, "Random Sampling in OKLab L Planes", true);
 
-function test(inputPixelsOKLCH, label) {
-  console.log("Testing with input type: %s", label);
-  const culoriInputsOKLCH = oklchPixelsRandom.map(([l, c, h]) => {
+function test(inputPixelsOKLCH, label, fixedCusp) {
+  let cuspMap;
+  if (fixedCusp) {
+    cuspMap = new Array(360).fill(null);
+    inputPixelsOKLCH = inputPixelsOKLCH.map((oklch) => {
+      const H = constrainAngle(Math.round(oklch[2]));
+      oklch = oklch.slice();
+      oklch[2] = H;
+      if (!cuspMap[H]) {
+        const Hr = degToRad(H);
+        const a = Math.cos(Hr);
+        const b = Math.sin(Hr);
+        cuspMap[H] = findCuspOKLCH(a, b, gamut);
+      }
+      return oklch;
+    });
+  }
+
+  console.log(
+    "Testing with input type: %s%s",
+    label,
+    fixedCusp ? " (Fixed Cusp)" : ""
+  );
+  const culoriInputsOKLCH = inputPixelsOKLCH.map(([l, c, h]) => {
     return {
       mode: "oklch",
       l,
@@ -66,7 +90,7 @@ function test(inputPixelsOKLCH, label) {
   tmp = [0, 0, 0];
   now = performance.now();
   for (let oklch of inputPixelsOKLCH) {
-    convert(oklch, OKLCH, DisplayP3, tmp);
+    convert(oklch, OKLCH, target, tmp);
   }
   elapsedOurs = performance.now() - now;
 
@@ -74,7 +98,7 @@ function test(inputPixelsOKLCH, label) {
   for (let oklchColor of culoriInputsOKLCH) {
     p3(oklchColor);
 
-    // same perf
+    // same perf ?
     // p3Converter(oklchColor);
   }
   elapsedCulori = performance.now() - now;
@@ -83,11 +107,20 @@ function test(inputPixelsOKLCH, label) {
   //// gamut
 
   tmp = [0, 0, 0];
-  now = performance.now();
-  for (let oklch of inputPixelsOKLCH) {
-    gamutMapOKLCH(oklch, DisplayP3Gamut, DisplayP3, tmp);
+  if (fixedCusp && cuspMap) {
+    now = performance.now();
+    for (let oklch of inputPixelsOKLCH) {
+      const cusp = cuspMap[oklch[2]];
+      gamutMapOKLCH(oklch, gamut, target, tmp, undefined, cusp);
+    }
+    elapsedOurs = performance.now() - now;
+  } else {
+    now = performance.now();
+    for (let oklch of inputPixelsOKLCH) {
+      gamutMapOKLCH(oklch, gamut, target, tmp);
+    }
+    elapsedOurs = performance.now() - now;
   }
-  elapsedOurs = performance.now() - now;
 
   now = performance.now();
   for (let oklchColor of culoriInputsOKLCH) {
