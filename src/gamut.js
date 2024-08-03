@@ -292,7 +292,10 @@ export const gamutMapOKLCH = (
   // that gamut mapping will do anything, and it may simply produce a new
   // point that lies the same or similar distance away from the gamut edge
   // see test/test-gamut-epsilon.js
-  const RGB_CLIP_EPSILON = 0.000074;
+  // Also see here: https://github.com/color-js/color.js/issues/81
+  // Using hue of 264.1º will show some situations in the achromatic black that pull out a little
+  // and if this number is too high it will catch a lot of points there
+  const RGB_CLIP_EPSILON = 0.0000001;
 
   // check where the point lies in gamut space
   if (!isRGBInGamut(rgbVec, RGB_CLIP_EPSILON)) {

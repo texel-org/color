@@ -13,12 +13,13 @@ import {
   constrainAngle,
   floatToByte,
   isRGBInGamut,
+  clampedRGB,
 } from "../src/index.js";
 import arrayAlmostEqual from "./almost-equal.js";
 
 const settings = {
   dimensions: [768, 768],
-  animate: true,
+  animate: false,
   playbackRate: "throttle",
   fps: 2,
   attributes: {
@@ -34,7 +35,8 @@ const sketch = ({ width, height }) => {
 
     context.fillStyle = "gray";
     context.fillRect(0, 0, width, height);
-    const H = constrainAngle((frame * 45) / 2);
+    const H = 264.1;
+    // const H = constrainAngle((frame * 45) / 2);
 
     // console.time("map");
     // console.profile("map");
@@ -123,7 +125,7 @@ const sketch = ({ width, height }) => {
         context.lineTo(...LCtoXY(mapped));
         context.stroke();
         context.globalAlpha = 1;
-        drawLCPoint(context, mapped.slice(0, 2), radius, "white");
+        drawLCPoint(context, mapped.slice(0, 2), radius / 4, "white");
       } else {
         drawLCPoint(context, lc, radius);
       }
