@@ -85,7 +85,7 @@ The return value is the new coordinates in the destination space; such as `[r,g,
 
 #### `output = gamutMapOKLCH(oklch, gamut = sRGBGamut, targetSpace = gamut.space, out = [0, 0, 0], mapping = MapToCuspL, [cusp])`
 
-Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's the the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
+Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's to the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
 
 ```js
 import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "@texel/color";
@@ -331,7 +331,7 @@ OKHSLToOKLab([h, s, l], DisplayP3Gamut, optionalOutVec);
 
 [Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
 
-Colorjs, and simialrly, [Culori](https://culorijs.org/)), are focused on matching CSS spec, which means it will very likely continue to grow in complexity over time, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and ~60 times faster than culori).
+Colorjs, and simialrly, [Culori](https://culorijs.org/), are focused on matching CSS spec, which means it will very likely continue to grow in complexity over time, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and ~60 times faster than culori).
 
 There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 whitepoints in XYZ).
 
