@@ -293,7 +293,7 @@ export const gamutMapOKLCH = (
   // but in some cases very slightly out of gamut. Gamut mapping *again* is redundant
   // as it will produce the same result; and in those cases, it should just skip straight
   // to clipping. So, in theory, a small epsilon like 1e-7 would catch these and prevent redundant gamut mapping.
-  // See test/test-gamut-epsilon.js
+  // See test/check-gamut-epsilon.js
   // However, in practice, inputs to this function are likely not going to be already-mapped-but-not-clipped points,
   // so we are talking about a very negligible improvement, and it is probably better to be accurate in as many cases
   // as possible than to shave off a little time.
@@ -324,6 +324,19 @@ export const gamutMapOKLCH = (
     );
     out[0] = lerp(LTarget, L, t);
     out[1] *= t;
+
+    // Note: if requested targetSpace is base=OKLCH, we can return early.
+    // note this creates a potential difference compared to going to other targetSpaces:
+    // a) mapping to sRGB then finally converting back to OKLCH the result may be lossy in
+    //    some coordinates that you might not expect, e.g. hue loss when hue should be unchanged
+    //    during gamut mapping, due to conversion / floating point math
+    // b) if you map to sRGB it will perform clipping, but if you map to OKLCH then no sRGB clipping
+    //    will be applied. The OKLCH result is _basically_ in gamut, but not exactly; you'll need to clip at final stage.
+    // I've documented this behaviour in the readme.
+    const targetSpaceBase = targetSpace.base ?? targetSpace;
+    if (targetSpaceBase == OKLab) {
+      return convert(out, OKLCH, targetSpace, out);
+    }
 
     // now that we have a LCH that sits on (or nearly on) the gamut, convert again to linear space
     convert(out, OKLCH, gamutSpaceBase, rgbVec);

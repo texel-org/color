@@ -12,10 +12,12 @@ import {
   degToRad,
   findCuspOKLCH,
   findGamutIntersectionOKLCH,
+  gamutMapOKLCH,
   isRGBInGamut,
   lerp,
   MapToCuspL,
   OKLCH,
+  sRGB,
   sRGBGamut,
   sRGBLinear,
 } from "../src/index.js";
@@ -24,7 +26,7 @@ const gamut = sRGBGamut;
 const target = gamut.space.base; // linear form
 
 // slice the plane into a square
-const slices = 256;
+const slices = 100;
 let avgDelta = 0;
 let avgCount = 0;
 let minDelta = Infinity;
@@ -50,7 +52,6 @@ for (let chroma = 0.22; chroma < 0.285; chroma += 0.001) {
     const mappedRGB = convert(mappedOKLCH, OKLCH, sRGBLinear);
     const delta = clipDelta(mappedRGB);
     if (!delta.every((n) => n == 0)) console.log("hue", hue, "delta", delta);
-    // console.log("delta after fast map:", delta);
   }
 }
 
@@ -69,6 +70,7 @@ for (let H = 0; H < 360; H += 0.5) {
 
       // not exactly in space
       if (!isRGBInGamut(rgbl, 0)) {
+        // check epsilons
         if (isRGBInGamut(rgbl, RGB_CLIP_EPSILON)) {
           totalPointsUnderEpsilonBeforeMapping++;
         }

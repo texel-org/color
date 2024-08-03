@@ -93,9 +93,7 @@ import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "@texel/color";
 // gamut map to sRGB but return linear sRGB
 const lrgb = gamutMapOKLCH(oklch, sRGBGamut, sRGBLinear);
 
-// or gamut map to sRGB but return OKLCH
-// note, when finally converting this back to sRGB you will likely
-// want to clip the result to 0..1 bounds due to floating point loss
+// or gamut map to sRGB but return OKLCH (does not perform RGB clip)
 const lch = gamutMapOKLCH(oklch, sRGBGamut, OKLCH);
 ```
 
@@ -117,6 +115,8 @@ gamutMapOKLCH(oklch, sRGBGamut, sRGB, rgb, MapToL);
 ```
 
 The `cusp` can also be passed as the last parameter, allowing for faster evaluation for known hues. See below for calculating the cusp.
+
+> :Note: If you output to an OKLab-based target (OKLCH, OKHSL etc), the final step of RGB clipping will be skipped. This produces more predictable OKLab and OKLCH based results, but you will likely want to perform a final clampedRGB() step when converting to a displayable color.
 
 #### `LC = findCuspOKLCH(a, b, gamut, out = [0, 0])`
 
