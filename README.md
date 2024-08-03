@@ -307,7 +307,9 @@ sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
 
 ### Why another library?
 
-[Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing. Colorjs is more focused on matching CSS spec, which means it will very likely continue to grow in complexity, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and its defaultt CSS based gamut mapping).
+[Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
+
+Colorjs, and simialrly, [Culori](https://culorijs.org/)), are focused on matching CSS spec, which means it will very likely continue to grow in complexity over time, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and ~60 times faster than culori).
 
 There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 whitepoints in XYZ).
 
@@ -337,6 +339,7 @@ If you think the matrices or accuracy could be improved, please open a PR.
 There are a few benchmarks inside [test](./test):
 
 - [bench-colorjs.js](./test/bench-colorjs.js) - run with `npm run bench` to compare against colorjs
+- [bench-culori.js](./test/bench-colorjs.js) - run with node to compare against [culori](https://culorijs.org/)
 - [bench-node.js](./test/bench-node.js) - run with `npm run bench:node` to get a node profile
 - [bench-size.js](./test/bench-size.js) - run with `npm run bench:size` to get a small bundle size with esbuild
 
@@ -357,6 +360,21 @@ Conversion + Gamut Mapping --
 Colorjs: 1936.29 ms
 Ours: 82.04 ms
 Speedup: 23.6x faster
+```
+
+And against culori:
+
+```
+Testing with input type: Random Samling in OKLab L Planes
+Conversion OKLCH to P3 --
+Culori: 43.30 ms
+Ours: 12.83 ms
+Speedup: 3.4x faster
+
+Gamut Mapping OKLCH to P3 Gamut --
+Culori: 1588.62 ms
+Ours: 23.05 ms
+Speedup: 68.9x faster
 ```
 
 ### Running Locally

@@ -98,7 +98,7 @@ function test(inputPixelsOKLCH, label) {
 
   function print(label) {
     console.log("%s --", label);
-    console.log("Colorjs: %s ms", elapsedCulori.toFixed(2));
+    console.log("Culori: %s ms", elapsedCulori.toFixed(2));
     console.log("Ours: %s ms", elapsedOurs.toFixed(2));
     if (elapsedCulori > elapsedOurs)
       console.log(
