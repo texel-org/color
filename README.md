@@ -147,18 +147,34 @@ gamutMapOKLCH(oklch, gamut, gamut.space, out, MapToCuspL, cuspLC);
 
 The `a` and `b` can also be from OKLab coordinates, but must be normalized so `a^2 + b^2 == 1`.
 
-#### `str = serialize(coords, inputSpace = sRGB, outputSpace = inputSpace)`
+#### `str = serialize(coords, inputSpace, outputSpace = inputSpace)`
 
-Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS.
+Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS. You can optionally pass an `alpha` component (0..1 range) as the fourth element in the `coords` array for it to be considered.
 
 ```js
 import { serialize, sRGB, DisplayP3, OKLCH } from "@texel/color";
 
 serialize([0, 0.5, 1], sRGB); // "rgb(0, 128, 255)"
+serialize([0, 0.5, 1, 0.5], sRGB); // "rgba(0, 128, 255, 0.5)"
 serialize([0, 0.5, 1], DisplayP3); // "color(display-p3 0 0.5 1)"
+serialize([0, 0.5, 1, 0.35], DisplayP3); // "color(display-p3 0 0.5 1 / 0.35)"
 serialize([1, 0, 0], OKLCH, sRGB); // "rgb(255, 255, 255)"
 serialize([1, 0, 0], OKLCH); // "oklch(1 0 0)"
 ```
+
+#### `coords = deserialize(colorString)`
+
+The inverse of `serialize`, this will take a string and determine the color space `id` it is referencing, and the 3 or 4 (for alpha) `coords`. This is intentionally limited in functionality, only supporting hex RGB, `rgb()` and `rgba()` bytes, and `oklch()`, `oklab()`, and plain `color()` functions with no modifiers.
+
+```js
+import { deserialize } from "@texel/color";
+
+const { coords, id } = deserialize("color(display-p3 0 0.5 1 / 0.35)");
+console.log(id); // "display-p3"
+console.log(coords); // [ 0, 0.5, 1, 0.35 ]
+```
+
+> **Note:** Parsing is still a WIP area of API design, and complex CSS color string handling is not within the scope of this library.
 
 #### `delta = deltaEOK(oklabA, oklabB)`
 
@@ -306,7 +322,7 @@ sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
 
 // OKHSL in a non-sRGB gamut
 // also see OKHSVToOKLab and their inverse functions
-OKHSLToOKLab([h, s, l], DisplayP3Gamut, optionalOut);
+OKHSLToOKLab([h, s, l], DisplayP3Gamut, optionalOutVec);
 ```
 
 ## Notes

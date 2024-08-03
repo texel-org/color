@@ -1,6 +1,6 @@
-import { floatToByte, vec3 } from "./util.js";
+import { clamp, floatToByte, hexToRGB, vec3 } from "./util.js";
 import { LMS_to_OKLab_M, OKLab_to_LMS_M } from "./conversion_matrices.js";
-import { XYZ } from "./spaces.js";
+import { listColorSpaces, sRGB, XYZ } from "./spaces.js";
 
 const tmp3 = vec3();
 
@@ -51,23 +51,129 @@ const vec3Copy = (input, output) => {
 
 export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
   if (!inputSpace) throw new Error(`must specify an input space`);
+  // extract alpha if present
+  let alpha = 1;
+  if (input.length > 3) {
+    alpha = input[3];
+  }
+  // copy into temp
+  vec3Copy(input, tmp3);
+  // convert if needed
   if (inputSpace !== outputSpace) {
     convert(input, inputSpace, outputSpace, tmp3);
-  } else {
-    vec3Copy(input, tmp3);
   }
-
   const id = outputSpace.id;
   if (id == "srgb") {
     const r = floatToByte(tmp3[0]);
     const g = floatToByte(tmp3[1]);
     const b = floatToByte(tmp3[2]);
-    return `rgb(${r}, ${g}, ${b})`;
-  } else if (id == "oklab" || id == "oklch") {
-    return `${id}(${tmp3[0]} ${tmp3[1]} ${tmp3[2]})`;
+    const rgb = `${r}, ${g}, ${b}`;
+    return alpha === 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
   } else {
-    return `color(${id} ${tmp3[0]} ${tmp3[1]} ${tmp3[2]})`;
+    const alphaSuffix = alpha === 1 ? "" : ` / ${alpha}`;
+    if (id == "oklab" || id == "oklch") {
+      return `${id}(${tmp3[0]} ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
+    } else {
+      return `color(${id} ${tmp3[0]} ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
+    }
   }
+};
+
+const stripAlpha = (coords) => {
+  if (coords.length >= 4 && coords[3] === 1) return coords.slice(0, 3);
+  return coords;
+};
+
+export const deserialize = (input) => {
+  if (typeof input !== "string") {
+    throw new Error(`expected a string as input`);
+  }
+  input = input.trim();
+  if (input.charAt(0) === "#") {
+    const rgbIn = input.slice(0, 7);
+    let alphaByte = input.length > 7 ? parseInt(input.slice(7, 9), 16) : 255;
+    let alpha = isNaN(alphaByte) ? 1 : alphaByte / 255;
+    const coords = hexToRGB(rgbIn);
+    if (alpha !== 1) coords.push(alpha);
+    return {
+      id: "srgb",
+      coords,
+    };
+  } else {
+    const parts = /^(rgb|rgba|oklab|oklch|color)\((.+)\)$/i.exec(input);
+    if (!parts) {
+      throw new Error(`could not parse color string ${input}`);
+    }
+    const fn = parts[1].toLowerCase();
+    if (/^rgba?$/i.test(fn)) {
+      const hasAlpha = fn == "rgba";
+      const coords = parts[2]
+        .split(",")
+        .map((v, i) =>
+          i < 3 ? clamp(parseInt(v, 10) || 0, 0, 255) / 255 : parseFloat(v)
+        );
+      const expectedLen = hasAlpha ? 4 : 3;
+      if (coords.length !== expectedLen) {
+        throw new Error(
+          `got ${fn} with incorrect number of coords, expected ${expectedLen}`
+        );
+      }
+      return {
+        id: "srgb",
+        coords: stripAlpha(coords),
+      };
+    } else {
+      let id, coordsStrings;
+      if (fn === "color") {
+        const params =
+          /([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s/]+)(?:\s?\/\s?([^\s]+))?/.exec(
+            parts[2]
+          );
+        if (!params)
+          throw new Error(`could not parse color() function ${input}`);
+        id = params[1].toLowerCase();
+        coordsStrings = params.slice(2, 6);
+      } else if (/^(oklab|oklch)$/.test(fn)) {
+        id = fn;
+        const params =
+          /([^\s]+)\s+([^\s]+)\s+([^\s/]+)(?:\s?\/\s?([^\s]+))?/.exec(parts[2]);
+        if (!params)
+          throw new Error(`could not parse color() function ${input}`);
+        coordsStrings = params.slice(1, 6);
+      }
+
+      if (coordsStrings[3] == null) {
+        coordsStrings = coordsStrings.slice(0, 3);
+      }
+
+      const coords = coordsStrings.map((f) => parseFloat(f));
+      if (coords.length < 3 || coords.length > 4)
+        throw new Error(`invalid number of coordinates`);
+      return {
+        id,
+        coords: stripAlpha(coords),
+      };
+    }
+  }
+};
+export const parse = (input, targetSpace, out = vec3()) => {
+  if (!targetSpace)
+    throw new Error(`must specify a target space to parse into`);
+
+  const { coords, id } = deserialize(input);
+  const space = listColorSpaces().find((f) => id === f.id);
+  if (!space) throw new Error(`could not find space with the id ${id}`);
+  const alpha = coords.length === 4 ? coords[3] : 1;
+
+  // copy 3D coords to output and convert
+  vec3Copy(coords, out);
+  convert(out, space, targetSpace, out);
+
+  // store alpha
+  if (alpha !== 1) out[3] = alpha;
+  // reduce to 3D
+  if (alpha == 1 && out.length === 4) out.pop();
+  return out;
 };
 
 export const convert = (input, fromSpace, toSpace, out = vec3()) => {

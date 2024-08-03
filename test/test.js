@@ -42,6 +42,8 @@ import {
   A98RGBLinear,
   XYZ_to_linear_A98RGB_M,
   DisplayP3Gamut,
+  deserialize,
+  parse,
 } from "../src/index.js";
 
 test("should convert XYZ in different whitepoints", async (t) => {
@@ -229,6 +231,92 @@ test("should serialize", async (t) => {
   t.deepEqual(serialize([0, 0.5, 1], sRGBLinear), "color(srgb-linear 0 0.5 1)");
   t.deepEqual(serialize([1, 0, 0], OKLCH, sRGB), "rgb(255, 255, 255)");
   t.deepEqual(serialize([1, 0, 0], OKLCH), "oklch(1 0 0)");
+  t.deepEqual(serialize([1, 0, 0], OKLab), "oklab(1 0 0)");
+  t.deepEqual(
+    serialize([1, 0, 0, 0.4523], OKLCH, sRGB),
+    "rgba(255, 255, 255, 0.4523)"
+  );
+  t.deepEqual(
+    serialize([1, 0, 0, 0.4523], OKLCH, OKLCH),
+    "oklch(1 0 0 / 0.4523)"
+  );
+  t.deepEqual(serialize([1, 0, 0, 0.4523], OKLCH), "oklch(1 0 0 / 0.4523)");
+  t.deepEqual(
+    serialize([1, 0, 0, 0.4523], DisplayP3),
+    "color(display-p3 1 0 0 / 0.4523)"
+  );
+});
+
+test("should parse to a color coord", async (t) => {
+  t.deepEqual(parse("rgb(0, 128, 255)", sRGB), [0, 128 / 0xff, 255 / 0xff]);
+  t.deepEqual(parse("rgba(0, 128, 255, .25)", sRGB), [
+    0,
+    128 / 0xff,
+    255 / 0xff,
+    0.25,
+  ]);
+  let outVec = [0, 0, 0];
+  t.deepEqual(parse("rgba(0, 128, 255, 1)", sRGB), [0, 128 / 0xff, 255 / 0xff]);
+  let out;
+  out = parse("rgba(0, 128, 255, 1)", sRGB, outVec);
+  t.deepEqual(out, [0, 128 / 0xff, 255 / 0xff]);
+  t.equal(out, outVec);
+
+  // trims to 3
+  outVec = [0, 0, 0, 0];
+  out = parse("rgba(0, 128, 255, 1)", sRGB, outVec);
+  t.deepEqual(out, [0, 128 / 0xff, 255 / 0xff]);
+  t.equal(out, outVec);
+
+  // ensures 4
+  outVec = [0, 0, 0, 0];
+  out = parse("rgba(0, 128, 255, 0.91)", sRGB, outVec);
+  t.deepEqual(out, [0, 128 / 0xff, 255 / 0xff, 0.91]);
+  t.equal(out, outVec);
+
+  t.deepEqual(
+    serialize(parse("oklch(1 0 0)", sRGB), sRGB),
+    "rgb(255, 255, 255)"
+  );
+});
+
+test("should deserialize color string information", async (t) => {
+  t.deepEqual(deserialize("rgb(0, 128, 255)"), {
+    coords: [0, 128 / 0xff, 255 / 0xff],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("rgba(0, 128, 255, 0.35)"), {
+    coords: [0, 128 / 0xff, 255 / 0xff, 0.35],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("#ff00cc"), {
+    id: "srgb",
+    coords: [1, 0, 0.8],
+  });
+  t.deepEqual(deserialize("#ff00cccc"), {
+    id: "srgb",
+    coords: [1, 0, 0.8, 0.8],
+  });
+  t.deepEqual(deserialize("color(srgb-linear 0 0.5 1)"), {
+    id: "srgb-linear",
+    coords: [0, 0.5, 1],
+  });
+  t.deepEqual(deserialize("color(srgb-linear 0 0.5 1/0.25)"), {
+    id: "srgb-linear",
+    coords: [0, 0.5, 1, 0.25],
+  });
+  t.deepEqual(deserialize("color(srgb-linear 0 0.5 1 / 0.25)"), {
+    id: "srgb-linear",
+    coords: [0, 0.5, 1, 0.25],
+  });
+  t.deepEqual(deserialize("oklch(1 0 0)"), {
+    id: "oklch",
+    coords: [1, 0, 0],
+  });
+  t.deepEqual(deserialize("oklch(1 0 0/0.25)"), {
+    id: "oklch",
+    coords: [1, 0, 0, 0.25],
+  });
 });
 
 test("utils", async (t) => {

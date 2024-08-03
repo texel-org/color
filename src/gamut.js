@@ -334,7 +334,7 @@ export const gamutMapOKLCH = (
     //    will be applied. The OKLCH result is _basically_ in gamut, but not exactly; you'll need to clip at final stage.
     // I've documented this behaviour in the readme.
     const targetSpaceBase = targetSpace.base ?? targetSpace;
-    if (targetSpaceBase == OKLab) {
+    if (targetSpaceBase.id == "oklab") {
       return convert(out, OKLCH, targetSpace, out);
     }
 
