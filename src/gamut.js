@@ -288,8 +288,14 @@ export const gamutMapOKLCH = (
   // convert oklch to base gamut space (i.e. linear sRGB)
   convert(out, OKLCH, gamutSpaceBase, rgbVec);
 
+  // Note: if the distance lies under this threshold, it's unlikely
+  // that gamut mapping will do anything, and it may simply produce a new
+  // point that lies the same or similar distance away from the gamut edge
+  // see test/test-gamut-epsilon.js
+  const RGB_CLIP_EPSILON = 0.000074;
+
   // check where the point lies in gamut space
-  if (!isRGBInGamut(rgbVec, 0)) {
+  if (!isRGBInGamut(rgbVec, RGB_CLIP_EPSILON)) {
     // we aren't in gamut, so let's map toward it
     const L = out[0];
     const C = out[1];
@@ -314,17 +320,7 @@ export const gamutMapOKLCH = (
     out[0] = lerp(LTarget, L, t);
     out[1] *= t;
 
-    // special case: if requested targetSpace is base=OKLCH, we can return early.
-    // note this creates a potential difference compared to other targetSpaces, which
-    // will be clipped in RGB before converting to the target space.
-    // however, due to floating point arithmetic, a user doing OKLCH -> RGB will still
-    // need to clip the result again anyways, so perhaps this difference is negligible.
-    const targetSpaceBase = targetSpace.base ?? targetSpace;
-    if (targetSpaceBase == OKLab) {
-      return convert(out, OKLCH, targetSpace, out);
-    }
-
-    // now that we have a LCH that sits on the gamut, convert again to linear space
+    // now that we have a LCH that sits on (or nearly on) the gamut, convert again to linear space
     convert(out, OKLCH, gamutSpaceBase, rgbVec);
   }
   // clip the linear RGB to 0..1 range
