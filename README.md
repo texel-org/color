@@ -162,7 +162,7 @@ serialize([1, 0, 0], OKLCH, sRGB); // "rgb(255, 255, 255)"
 serialize([1, 0, 0], OKLCH); // "oklch(1 0 0)"
 ```
 
-#### `coords = deserialize(colorString)`
+#### `info = deserialize(colorString)`
 
 The inverse of `serialize`, this will take a string and determine the color space `id` it is referencing, and the 3 or 4 (for alpha) `coords`. This is intentionally limited in functionality, only supporting hex RGB, `rgb()` and `rgba()` bytes, and `oklch()`, `oklab()`, and plain `color()` functions with no modifiers.
 
