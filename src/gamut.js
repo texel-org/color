@@ -288,14 +288,16 @@ export const gamutMapOKLCH = (
   // convert oklch to base gamut space (i.e. linear sRGB)
   convert(out, OKLCH, gamutSpaceBase, rgbVec);
 
-  // Note: if the distance lies under this threshold, it's unlikely
-  // that gamut mapping will do anything, and it may simply produce a new
-  // point that lies the same or similar distance away from the gamut edge
-  // see test/test-gamut-epsilon.js
-  // Also see here: https://github.com/color-js/color.js/issues/81
-  // Using hue of 264.1º will show some situations in the achromatic black that pull out a little
-  // and if this number is too high it will catch a lot of points there
-  const RGB_CLIP_EPSILON = 0.0000001;
+  // Note: this is a possible area of performance improvement for some edge cases
+  // If you gamut map without clipping, you end up lying on the edge of the gamut,
+  // but in some cases very slightly out of gamut. Gamut mapping *again* is redundant
+  // as it will produce the same result; and in those cases, it should just skip straight
+  // to clipping. So, in theory, a small epsilon like 1e-7 would catch these and prevent redundant gamut mapping.
+  // See test/test-gamut-epsilon.js
+  // However, in practice, inputs to this function are likely not going to be already-mapped-but-not-clipped points,
+  // so we are talking about a very negligible improvement, and it is probably better to be accurate in as many cases
+  // as possible than to shave off a little time.
+  const RGB_CLIP_EPSILON = 0;
 
   // check where the point lies in gamut space
   if (!isRGBInGamut(rgbVec, RGB_CLIP_EPSILON)) {

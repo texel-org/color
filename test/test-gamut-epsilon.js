@@ -24,7 +24,7 @@ const gamut = sRGBGamut;
 const target = gamut.space.base; // linear form
 
 // slice the plane into a square
-const slices = 100;
+const slices = 256;
 let avgDelta = 0;
 let avgCount = 0;
 let minDelta = Infinity;
@@ -35,6 +35,7 @@ let maxDelta = -Infinity;
 const RGB_CLIP_EPSILON = 0.0000001;
 let totalPointsOutOfGamut = 0;
 let totalPointsUnderEpsilon = 0;
+let totalPointsUnderEpsilonBeforeMapping = 0;
 
 // this particular hue is a little funky
 // https://github.com/color-js/color.js/issues/81
@@ -53,7 +54,7 @@ for (let chroma = 0.22; chroma < 0.285; chroma += 0.001) {
   }
 }
 
-// test all hue planes 0.5º difference apart
+// test all hue planes Nº difference apart
 // we will see some gamut mapped points still do not lie exactly in gamut
 for (let H = 0; H < 360; H += 0.5) {
   for (let y = 0; y < slices; y++) {
@@ -68,6 +69,10 @@ for (let H = 0; H < 360; H += 0.5) {
 
       // not exactly in space
       if (!isRGBInGamut(rgbl, 0)) {
+        if (isRGBInGamut(rgbl, RGB_CLIP_EPSILON)) {
+          totalPointsUnderEpsilonBeforeMapping++;
+        }
+
         const oklch = gamutMapWithoutClipOKLCH([L, C, H]);
         rgbl = convert(oklch, OKLCH, target);
 
@@ -122,4 +127,8 @@ console.log("Max Epsilon:", maxDelta);
 console.log("Average Epsilon:", avgDelta);
 console.log("Compare against epsilon:", RGB_CLIP_EPSILON);
 console.log("Total points out of gamut:", totalPointsOutOfGamut);
-console.log("Total points under epsilon:", totalPointsUnderEpsilon);
+console.log(
+  "Total points under epsilon (before map):",
+  totalPointsUnderEpsilonBeforeMapping
+);
+console.log("Total points under epsilon (after map):", totalPointsUnderEpsilon);
