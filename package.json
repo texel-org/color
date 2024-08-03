@@ -13,6 +13,7 @@
     "canvas-sketch": "^0.7.7",
     "canvas-sketch-cli": "^1.11.21",
     "colorjs.io": "^0.5.2",
+    "culori": "^4.0.1",
     "esbuild": "^0.23.0",
     "faucet": "^0.0.4",
     "pako": "^2.1.0",
