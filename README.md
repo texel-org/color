@@ -116,7 +116,7 @@ gamutMapOKLCH(oklch, sRGBGamut, sRGB, rgb, MapToL);
 
 The `cusp` can also be passed as the last parameter, allowing for faster evaluation for known hues. See below for calculating the cusp.
 
-> :Note: If you output to an OKLab-based target (OKLCH, OKHSL etc), the final step of RGB clipping will be skipped. This produces more predictable OKLab and OKLCH based results, but you will likely want to perform a final clampedRGB() step when converting to a displayable color.
+> **Note:** If you map to an OKLab-based target (OKLCH, OKHSL etc), the final step of RGB clipping will be skipped. This produces more predictable OKLab and OKLCH based results, but you will likely want to perform a final clampedRGB() step when converting to a displayable color.
 
 #### `LC = findCuspOKLCH(a, b, gamut, out = [0, 0])`
 
