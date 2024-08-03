@@ -319,7 +319,7 @@ export const gamutMapOKLCH = (
     // will be clipped in RGB before converting to the target space.
     // however, due to floating point arithmetic, a user doing OKLCH -> RGB will still
     // need to clip the result again anyways, so perhaps this difference is negligible.
-    const targetSpaceBase = targetSpace.base ?? targetSpaceBase;
+    const targetSpaceBase = targetSpace.base ?? targetSpace;
     if (targetSpaceBase == OKLab) {
       return convert(out, OKLCH, targetSpace, out);
     }
