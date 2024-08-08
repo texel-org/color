@@ -1,6 +1,6 @@
 {
   "name": "@texel/color",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "a minimal and modern color library",
   "type": "module",
   "main": "./src/index.js",
