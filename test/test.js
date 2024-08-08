@@ -5,7 +5,7 @@ import {
   floatToByte,
   hexToRGB,
   isRGBInGamut,
-  RGBtoHex,
+  RGBToHex,
   linear_sRGB_to_LMS_M,
   LMS_to_linear_sRGB_M,
   LMS_to_XYZ_M,
@@ -320,7 +320,7 @@ test("should deserialize color string information", async (t) => {
 });
 
 test("utils", async (t) => {
-  t.deepEqual(RGBtoHex([0, 0.5, 1]), "#0080ff");
+  t.deepEqual(RGBToHex([0, 0.5, 1]), "#0080ff");
   t.deepEqual(hexToRGB("#0080ff"), [0, 0.5019607843137255, 1]);
   const tmp = [0, 0, 0];
   hexToRGB("#0080ff", tmp);
