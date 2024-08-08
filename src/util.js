@@ -26,8 +26,11 @@ export const hexToRGB = (str, out = vec3()) => {
   return out;
 };
 
-export const RGBtoHex = (rgb) =>
+export const RGBToHex = (rgb) =>
   `#${rgb.map((n) => floatToByte(n).toString(16).padStart(2, "0")).join("")}`;
+
+/** @deprecated use RGBToHex */
+export const RGBtoHex = (rgb) => RGBToHex;
 
 export const isRGBInGamut = (lrgb, ep = GAMUT_EPSILON) => {
   const r = lrgb[0];

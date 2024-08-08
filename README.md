@@ -142,6 +142,7 @@ const cuspLC = findCuspOKLCH(a, b, gamut);
 
 // ... somewhere else in your program ...
 // pass 'cusp' parameter for faster evaluation
+// expected that your OKLCH coord has the same hue as the cusp (H)
 gamutMapOKLCH(oklch, gamut, gamut.space, out, MapToCuspL, cuspLC);
 ```
 
