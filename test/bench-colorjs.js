@@ -1,4 +1,24 @@
-import Color from "colorjs.io";
+import {
+  ColorSpace,
+  toGamut,
+  XYZ_D65 as XYZ_D65_COLORJS,
+  XYZ_D50 as XYZ_D50_COLORJS,
+  OKLab as OkLab_COLORJS,
+  OKLCH as OKLCH_COLORJS,
+  // Okhsv as Okhsv_COLORJS,
+  // Okhsl as Okhsl_COLORJS,
+  sRGB as SRGB_COLORJS,
+  sRGB_Linear as SRGB_Linear_COLORJS,
+  P3 as P3_COLORJS,
+  P3_Linear as P3_Linear_COLORJS,
+  REC_2020 as REC_2020_COLORJS,
+  REC_2020_Linear as REC_2020_Linear_COLORJS,
+  A98RGB as A98RGB_COLORJS,
+  A98RGB_Linear as A98RGB_Linear_COLORJS,
+  ProPhoto as ProPhoto_COLORJS,
+  ProPhoto_Linear as ProPhoto_Linear_COLORJS,
+ } from "colorjs.io/fn";
+
 import {
   convert,
   OKLCH,
@@ -14,6 +34,23 @@ import {
   MapToCuspL,
 } from "../src/index.js";
 
+ColorSpace.register(XYZ_D65_COLORJS);
+ColorSpace.register(XYZ_D50_COLORJS);
+ColorSpace.register(OkLab_COLORJS);
+ColorSpace.register(OKLCH_COLORJS);
+// ColorSpace.register(Okhsv_COLORJS);
+// ColorSpace.register(Okhsl_COLORJS);
+ColorSpace.register(SRGB_COLORJS);
+ColorSpace.register(SRGB_Linear_COLORJS);
+ColorSpace.register(P3_COLORJS);
+ColorSpace.register(P3_Linear_COLORJS);
+ColorSpace.register(REC_2020_COLORJS);
+ColorSpace.register(REC_2020_Linear_COLORJS);
+ColorSpace.register(A98RGB_COLORJS);
+ColorSpace.register(A98RGB_Linear_COLORJS);
+ColorSpace.register(ProPhoto_COLORJS);
+ColorSpace.register(ProPhoto_Linear_COLORJS);
+
 const fixName = (name) => {
   return name
     .replace("display-", "")
@@ -23,7 +60,7 @@ const fixName = (name) => {
 
 // TODO: test okhsl with latest version of colorjs
 const spaces = listColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
-const spacesForColorjs = spaces.map((s) => fixName(s.id));
+const spacesForColorjs = spaces.map((s) => ColorSpace.get(fixName(s.id)));
 
 const vecs = Array(128 * 128)
   .fill()
@@ -60,8 +97,12 @@ const oklchVecs = Array(512 * 256)
   });
 
 now = performance.now();
+let tmpColorjs = {space: SRGB_COLORJS, coords: [0, 0, 0], alpha: 1};
 for (let vec of oklchVecs) {
-  new Color("oklch", vec).to("srgb").toGamut({ space: "srgb", method: "css" });
+  tmpColorjs.coords = SRGB_COLORJS.from(OKLCH_COLORJS, vec);
+  // toGamut modifies the color in place
+  // the default gamut mapping method is css
+  toGamut(tmpColorjs);
 }
 elapsedColorjs = performance.now() - now;
 
@@ -87,7 +128,7 @@ for (let vec of vecs) {
     for (let j = 0; j < spacesForColorjs.length; j++) {
       const a = spacesForColorjs[i];
       const b = spacesForColorjs[j];
-      new Color(a, vec).to(b);
+      tmpColorjs = a.to(b, vec);
     }
   }
 }
@@ -113,10 +154,12 @@ console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
 //// gamut mapping
 
 now = performance.now();
+tmpColorjs = {space: P3_COLORJS, coords: [0, 0, 0], alpha: 1 }
 for (let vec of vecs) {
   for (let i = 0; i < spacesForColorjs.length; i++) {
     const a = spacesForColorjs[i];
-    new Color(a, vec).to("p3").toGamut({ space: "p3", method: "css" });
+    tmpColorjs.coords = P3_COLORJS.from(a, vec);
+    toGamut(tmpColorjs);
   }
 }
 elapsedColorjs = performance.now() - now;
