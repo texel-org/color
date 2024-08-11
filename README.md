@@ -5,7 +5,7 @@
 A minimal and modern color library for JavaScript. Especially useful for real-time applications, generative art, and graphics on the web.
 
 - Features: fast color conversion, color difference, gamut mapping, and serialization
-- Optimized for speed: approx 20-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
+- Optimized for speed: approx 5-125 times faster than [Colorjs.io](https://colorjs.io/) (see [benchmarks](#benchmarks))
 - Optimized for low memory and minimal allocations: no arrays or objects are created within conversion and gamut mapping functions
 - Optimized for compact bundles: zero dependencies, and unused color spaces can be automatically tree-shaked away for small sizes (e.g. ~3.5kb minified if you only require OKLCH to sRGB conversion)
 - Optimized for accuracy: [high precision](#accuracy) color space matrices
@@ -366,10 +366,10 @@ There are a few benchmarks inside [test](./test):
 - [bench-node.js](./test/bench-node.js) - run with `npm run bench:node` to get a node profile
 - [bench-size.js](./test/bench-size.js) - run with `npm run bench:size` to get a small bundle size with esbuild
 
-Colorjs comparison benchmark on MacBook Air M2:
+Results below, based on MacBook Air M2. Note that Colorjs performance depends on which API you use (the default class-based API is much slower than the procedural API).
 
 <details>
-  <summary>Benchmark Results</summary>
+  <summary>Benchmark Against Colorjs.io</summary>
 
 ```
 conversion (Colorjs.io procedural API) --
@@ -405,10 +405,8 @@ Speedup: 37.6x faster
 
 </details>
 
-And against culori:
-
 <details>
-  <summary>Benchmark Results</summary>
+  <summary>Benchmark Against Culori</summary>
 
 ```
 Testing with input type: Random Samling in OKLab L Planes
