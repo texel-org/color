@@ -1,10 +1,17 @@
 import Color from "colorjs.io";
 import {
+  sRGB as sRGB_ColorJS,
+  OKLCH as OKLCH_ColorJS,
+  P3 as DisplayP3_ColorJS,
+  toGamut,
+} from "colorjs.io/fn";
+import arrayAlmostEqual from "./almost-equal.js";
+import {
   convert,
   OKLCH,
+  OKLab,
   sRGB,
   sRGBGamut,
-  listColorSpaces,
   DisplayP3Gamut,
   DisplayP3,
   gamutMapOKLCH,
@@ -14,27 +21,25 @@ import {
   MapToCuspL,
 } from "../src/index.js";
 
-const fixName = (name) => {
-  return name
-    .replace("display-", "")
-    .replace("a98-rgb", "a98rgb")
-    .replace("prophoto-rgb", "prophoto");
-};
+import { getSupportedColorJSSpaces } from "./colorjs-fn.js";
 
-// TODO: test okhsl with latest version of colorjs
-const spaces = listColorSpaces().filter((f) => !/ok(hsv|hsl)/i.test(f.id));
-const spacesForColorjs = spaces.map((s) => fixName(s.id));
+const supportedSpaces = getSupportedColorJSSpaces();
 
-const vecs = Array(128 * 128)
+// @texel/color space interfaces
+const spaces = supportedSpaces.map((s) => s.space);
+
+// Colorjs.io space interfaces & IDs
+const colorJSSpaces = supportedSpaces.map((s) => s.colorJSSpace);
+const colorJSSpaceIDs = supportedSpaces.map((s) => s.colorJSSpace.id);
+
+const N = 128 * 128;
+
+// sampling variables within OKLab and converting to OKLCH
+const vecs = Array(N)
   .fill()
   .map((_, i, lst) => {
     const t = i / (lst.length - 1);
-    return (
-      Array(3)
-        .fill()
-        // -0.5 .. 1.5
-        .map(() => t + (t * 2 - 1) * 0.5)
-    );
+    return convert([t, t * 2 - 1, t * 2 - 1], OKLab, OKLCH);
   });
 
 const tmp = [0, 0, 0];
@@ -59,80 +64,165 @@ const oklchVecs = Array(512 * 256)
     return [t0, t0, H];
   });
 
-now = performance.now();
-for (let vec of oklchVecs) {
-  new Color("oklch", vec).to("srgb").toGamut({ space: "srgb", method: "css" });
-}
-elapsedColorjs = performance.now() - now;
-
-now = performance.now();
-for (let vec of oklchVecs) {
-  // you can omit the cusp and it will be found on the fly
-  // however the test will run slightly slower (e.g. ~100x faster rather than ~120x)
-  const cusp = hueCusps[vec[2]];
-  gamutMapOKLCH(vec, sRGBGamut, sRGB, tmp, MapToCuspL, cusp);
-}
-elapsedOurs = performance.now() - now;
-
-console.log("OKLCH to sRGB with gamut mapping --");
-console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
-console.log("Ours: %s ms", elapsedOurs.toFixed(2));
-console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
-
-//// conversions
-
-now = performance.now();
-for (let vec of vecs) {
-  for (let i = 0; i < spacesForColorjs.length; i++) {
-    for (let j = 0; j < spacesForColorjs.length; j++) {
-      const a = spacesForColorjs[i];
-      const b = spacesForColorjs[j];
-      new Color(a, vec).to(b);
+compare(
+  "conversion (Colorjs.io procedural API)",
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < colorJSSpaces.length; i++) {
+        for (let j = 0; j < colorJSSpaces.length; j++) {
+          const a = colorJSSpaces[i];
+          const b = colorJSSpaces[j];
+          const ret = b.from(a, vec);
+        }
+      }
+    }
+  },
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < spaces.length; i++) {
+        for (let j = 0; j < spaces.length; j++) {
+          const a = spaces[i];
+          const b = spaces[j];
+          convert(vec, a, b, tmp);
+        }
+      }
     }
   }
-}
-elapsedColorjs = performance.now() - now;
+);
 
-now = performance.now();
-for (let vec of vecs) {
-  for (let i = 0; i < spaces.length; i++) {
-    for (let j = 0; j < spaces.length; j++) {
-      const a = spaces[i];
-      const b = spaces[j];
-      convert(vec, a, b, tmp);
+compare(
+  "conversion (Colorjs.io main API)",
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < colorJSSpaceIDs.length; i++) {
+        for (let j = 0; j < colorJSSpaceIDs.length; j++) {
+          const a = colorJSSpaceIDs[i];
+          const b = colorJSSpaceIDs[j];
+          new Color(a, vec).to(b);
+        }
+      }
+    }
+  },
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < spaces.length; i++) {
+        for (let j = 0; j < spaces.length; j++) {
+          const a = spaces[i];
+          const b = spaces[j];
+          convert(vec, a, b, tmp);
+        }
+      }
     }
   }
-}
-elapsedOurs = performance.now() - now;
-console.log();
-console.log("All Conversions --");
-console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
-console.log("Ours: %s ms", elapsedOurs.toFixed(2));
-console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
+);
 
-//// gamut mapping
-
-now = performance.now();
-for (let vec of vecs) {
-  for (let i = 0; i < spacesForColorjs.length; i++) {
-    const a = spacesForColorjs[i];
-    new Color(a, vec).to("p3").toGamut({ space: "p3", method: "css" });
+compare(
+  "gamut mapping OKLCH - sRGB (Colorjs.io procedural API)",
+  () => {
+    let tmpColor = { space: sRGB_ColorJS, coords: [0, 0, 0], alpha: 1 };
+    for (let vec of oklchVecs) {
+      tmpColor.coords = sRGB_ColorJS.from(OKLCH_ColorJS, vec);
+      toGamut(tmpColor);
+    }
+  },
+  () => {
+    for (let vec of oklchVecs) {
+      // you can omit the cusp and it will be found on the fly,
+      // however the test will run slightly slower
+      const cusp = hueCusps[vec[2]];
+      gamutMapOKLCH(vec, sRGBGamut, sRGB, tmp, MapToCuspL, cusp);
+    }
   }
-}
-elapsedColorjs = performance.now() - now;
+);
 
-now = performance.now();
-for (let vec of vecs) {
-  for (let i = 0; i < spaces.length; i++) {
-    const a = spaces[i];
-    convert(vec, a, OKLCH, tmp);
-    gamutMapOKLCH(tmp, DisplayP3Gamut, DisplayP3, tmp);
+compare(
+  "gamut mapping OKLCH - sRGB (Colorjs.io main API)",
+  () => {
+    for (let vec of oklchVecs) {
+      new Color("oklch", vec)
+        .to("srgb")
+        .toGamut({ space: "srgb", method: "css" });
+    }
+  },
+  () => {
+    for (let vec of oklchVecs) {
+      // you can omit the cusp and it will be found on the fly,
+      // however the test will run slightly slower
+      const cusp = hueCusps[vec[2]];
+      gamutMapOKLCH(vec, sRGBGamut, sRGB, tmp, MapToCuspL, cusp);
+    }
   }
-}
-elapsedOurs = performance.now() - now;
+);
 
-console.log();
-console.log("Conversion + Gamut Mapping --");
-console.log("Colorjs: %s ms", elapsedColorjs.toFixed(2));
-console.log("Ours: %s ms", elapsedOurs.toFixed(2));
-console.log("Speedup: %sx faster", (elapsedColorjs / elapsedOurs).toFixed(1));
+compare(
+  "gamut mapping all spaces to P3 (Colorjs.io procedural API)",
+  () => {
+    let tmpColor = { space: DisplayP3_ColorJS, coords: [0, 0, 0], alpha: 1 };
+    for (let vec of vecs) {
+      for (let i = 0; i < colorJSSpaces.length; i++) {
+        const a = colorJSSpaces[i];
+        tmpColor.coords = DisplayP3_ColorJS.from(a, vec);
+        toGamut(tmpColor);
+      }
+    }
+  },
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < spaces.length; i++) {
+        const a = spaces[i];
+        convert(vec, a, OKLCH, tmp);
+        gamutMapOKLCH(tmp, DisplayP3Gamut, DisplayP3, tmp);
+      }
+    }
+  }
+);
+
+compare(
+  "gamut mapping all spaces to P3 (Colorjs.io main API)",
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < colorJSSpaceIDs.length; i++) {
+        const a = colorJSSpaceIDs[i];
+        new Color(a, vec).to("p3").toGamut({ space: "p3", method: "css" });
+      }
+    }
+  },
+  () => {
+    for (let vec of vecs) {
+      for (let i = 0; i < spaces.length; i++) {
+        const a = spaces[i];
+        convert(vec, a, OKLCH, tmp);
+        gamutMapOKLCH(tmp, DisplayP3Gamut, DisplayP3, tmp);
+      }
+    }
+  }
+);
+
+function print(label) {
+  console.log("%s --", label);
+  console.log("Colorjs.io: %s ms", elapsedColorjs.toFixed(2));
+  console.log("Ours: %s ms", elapsedOurs.toFixed(2));
+  if (elapsedColorjs > elapsedOurs)
+    console.log(
+      "Speedup: %sx faster",
+      (elapsedColorjs / elapsedOurs).toFixed(1)
+    );
+  else
+    console.log(
+      "Slowdown: %sx slower",
+      (elapsedOurs / elapsedColorjs).toFixed(1)
+    );
+  console.log();
+}
+
+function compare(label, colorJSFn, ourFn) {
+  now = performance.now();
+  colorJSFn();
+  elapsedColorjs = performance.now() - now;
+
+  now = performance.now();
+  ourFn();
+  elapsedOurs = performance.now() - now;
+
+  print(label);
+}

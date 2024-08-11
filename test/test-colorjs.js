@@ -1,16 +1,18 @@
 import test from "tape";
 import Color from "colorjs.io";
 import arrayAlmostEqual from "./almost-equal.js";
-import { listColorSpaces, convert } from "../src/index.js";
+import { convert } from "../src/index.js";
+import { getSupportedColorJSSpaces } from "./colorjs-fn.js";
 
 test("should approximately match colorjs.io conversions", async (t) => {
   // note: we skip okhsv/hsl as colorjs.io doesn't support in the current npm version
-  const spaces = listColorSpaces().filter((f) => !/ok(hsl|hsv)/i.test(f.id));
+  const spaces = getSupportedColorJSSpaces();
   const vecs = [
     [0.12341, 0.12001, 0.05212],
     [1, 1, 1],
     [1, 0, 0],
     [0, 0, 0],
+    [-0.5, -0.5, -0.5],
     // some other inputs
     [0.95, 1, 1.089],
     [0.45, 1.236, -0.019],
@@ -28,18 +30,15 @@ test("should approximately match colorjs.io conversions", async (t) => {
   //     Math.random() * 2 - 1,
   //   ]);
 
-  const fixName = (name) => {
-    return name
-      .replace("display-", "")
-      .replace("a98-rgb", "a98rgb")
-      .replace("prophoto-rgb", "prophoto");
-  };
-
   for (let vec of vecs) {
     for (let i = 0; i < spaces.length; i++) {
       for (let j = 0; j < spaces.length; j++) {
-        const a = spaces[i];
-        const b = spaces[j];
+        const A = spaces[i];
+        const B = spaces[j];
+
+        // @texel/color spaces
+        const a = A.space;
+        const b = B.space;
         const suffix = `${a.id}-to-${b.id}`;
 
         console.log(suffix);
@@ -47,8 +46,8 @@ test("should approximately match colorjs.io conversions", async (t) => {
         const tmp = vec.slice();
         const expected1 = convert(vec, a, b, tmp);
 
-        const colorjsid_a = fixName(a.id);
-        const colorjsid_b = fixName(b.id);
+        const colorjsid_a = A.colorJSSpace.id;
+        const colorjsid_b = B.colorJSSpace.id;
         t.deepEqual(expected0, tmp, `${suffix} copies into`);
         t.deepEqual(expected0, expected1, `${suffix} copies into`);
         t.equal(expected1, tmp, `${suffix} copies into and returns`);

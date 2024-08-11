@@ -368,24 +368,47 @@ There are a few benchmarks inside [test](./test):
 
 Colorjs comparison benchmark on MacBook Air M2:
 
-```
-OKLCH to sRGB with gamut mapping --
-Colorjs: 6146.67 ms
-Ours: 46.77 ms
-Speedup: 131.4x faster
+<details>
+  <summary>Benchmark Results</summary>
 
-All Conversions --
-Colorjs: 10219.40 ms
-Ours: 431.13 ms
-Speedup: 23.7x faster
-
-Conversion + Gamut Mapping --
-Colorjs: 1936.29 ms
-Ours: 82.04 ms
-Speedup: 23.6x faster
 ```
+conversion (Colorjs.io procedural API) --
+Colorjs.io: 2955.88 ms
+Ours: 457.86 ms
+Speedup: 6.5x faster
+
+conversion (Colorjs.io main API) --
+Colorjs.io: 10034.38 ms
+Ours: 452.11 ms
+Speedup: 22.2x faster
+
+gamut mapping OKLCH - sRGB (Colorjs.io procedural API) --
+Colorjs.io: 5602.46 ms
+Ours: 49.10 ms
+Speedup: 114.1x faster
+
+gamut mapping OKLCH - sRGB (Colorjs.io main API) --
+Colorjs.io: 5913.80 ms
+Ours: 44.91 ms
+Speedup: 131.7x faster
+
+gamut mapping all spaces to P3 (Colorjs.io procedural API) --
+Colorjs.io: 4693.43 ms
+Ours: 150.16 ms
+Speedup: 31.3x faster
+
+gamut mapping all spaces to P3 (Colorjs.io main API) --
+Colorjs.io: 5478.16 ms
+Ours: 145.88 ms
+Speedup: 37.6x faster
+```
+
+</details>
 
 And against culori:
+
+<details>
+  <summary>Benchmark Results</summary>
 
 ```
 Testing with input type: Random Samling in OKLab L Planes
@@ -399,6 +422,8 @@ Culori: 1588.62 ms
 Ours: 23.05 ms
 Speedup: 68.9x faster
 ```
+
+</details>
 
 ### Running Locally
 
