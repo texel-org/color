@@ -5,7 +5,6 @@ import {
   P3 as DisplayP3_ColorJS,
   toGamut,
 } from "colorjs.io/fn";
-import arrayAlmostEqual from "./almost-equal.js";
 import {
   convert,
   OKLCH,
