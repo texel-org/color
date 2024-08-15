@@ -107,16 +107,9 @@ export const vec3 = () => [0, 0, 0];
 //   return ((2 * da) % max) - da;
 // }
 
-// function shortAngleDistDeg(a0, a1) {
-//   var max = 360;
-//   var da = (a1 - a0) % max;
-//   return ((2 * da) % max) - da;
-// }
+export const deltaAngle = (a0, a1) => {
+  var da = (a1 - a0) % 360;
+  return ((2 * da) % 360) - da;
+};
 
-// function lerpAngleRad(a0, a1, t) {
-//   return a0 + shortAngleDistRad(a0, a1) * t;
-// }
-
-// function lerpAngleDeg(a0, a1, t) {
-//   return radToDeg(lerpAngleRad(degToRad(a0), degToRad(a1), t));
-// }
+export const lerpAngle = (a0, a1, t) => a0 + deltaAngle(a0, a1) * t;

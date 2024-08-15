@@ -2,6 +2,12 @@ import { vec3 } from "../util.js";
 import { transform } from "../core.js";
 import { LMS_to_XYZ_M, XYZ_to_LMS_M } from "../conversion_matrices.js";
 
+// Note: for the time being, these are not exported
+// It may be exported in a future version
+// for compatibility, the four-digit chromaticity-derived ones everyone else uses
+// const D50 = [0.3457 / 0.3585, 1.0, (1.0 - 0.3457 - 0.3585) / 0.3585];
+// const D65 = [0.3127 / 0.329, 1.0, (1.0 - 0.3127 - 0.329) / 0.329];
+
 // Bradford chromatic adaptation from D65 to D50
 // The matrix below is the result of three operations:
 // - convert from XYZ to retinal cone domain

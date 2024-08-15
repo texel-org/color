@@ -14,7 +14,7 @@ const ProPhotoRGBToGamma = (v) => (v >= Et ? v ** (1 / 1.8) : 16 * v);
 
 // Note: below is a possibly improved transfer function proposed by CSS Module 4 spec
 // It is currently not matching the outputs of Colorjs.io when dealing with particular
-// negative values, such as convert([1,1,1], OKlab, ProPhotoRGB)
+// negative values, such as convert([1,1,1], OKLab, ProPhotoRGB)
 
 // const ProPhotoRGBToLinear = (val) => {
 //   // convert an array of prophoto-rgb values

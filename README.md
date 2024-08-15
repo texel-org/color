@@ -265,6 +265,10 @@ Converts the xyY coordinates to XYZ form, storing the results in `out` if specif
 
 Performs linear interpolation between min and max with the factor `t`.
 
+#### `v = lerpAngle(min, max, t)`
+
+Performs circular linear interpolation between min and max with the factor `t`, but where the min and max are considered to be angles (in degrees) allowing the value to wrap around within 0 to 360, interpolating to create the shortest arc.
+
 #### `c = clamp(value, min, max)`
 
 Clamps the `value` between min and max and returns the result.
@@ -326,6 +330,14 @@ sRGB.toBase(in_sRGB, out_linear_sRGB); // linear to gamma transfer function
 OKHSLToOKLab([h, s, l], DisplayP3Gamut, optionalOutVec);
 ```
 
+## Interpolation
+
+The library currently only exposes `{ lerp, lerpAngle }` functions. To interpolate colors, you will need to build some additional logic, for example see the [example-interpolation.js](./test/example-interpolation.js) script which creates a color ramp in Canvas2D.
+
+## Custom Color Spaces
+
+You can build custom color space objects to extend this library, such as adding support for CIELab and HSL. See [test/spaces/lab.js](./test/spaces/lab.js) and [test/spaces/hsl.js](./test/spaces/hsl.js) for examples of this. Some of these spaces may be added to the library at a later point, although the current focus is on "modern" spaces (such as OKLab that has largely made CIELab and HSL obsolete). Documentaiton on custom color spaces is WIP.
+
 ## Notes
 
 ### Why another library?
@@ -338,7 +350,7 @@ There are many other options such as [color-space](https://www.npmjs.com/package
 
 ### Supported Spaces
 
-This library does not aim to target every color space; it only focuses on a limited "modern" set, i.e. OKLab, OKHSL and DeltaEOK have replaced CIELab, HSL, and CIEDE2000 for many practical purposes, allowing this library to be simpler and slimmer.
+This library does not aim to target every color space; it only focuses on a limited "modern" set, i.e. OKLab, OKHSL and DeltaEOK have replaced CIELab, HSL, and CIEDE2000 for many practical purposes, allowing this library to be simpler and slimmer. Note that other spaces like CIELab and HSL are supported through 'custom color spaces'.
 
 ### Improvements & Techniques
 

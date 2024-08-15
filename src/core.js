@@ -200,6 +200,12 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
   // and the base we want to get to, linear, OKLab, XYZ etc...
   let toBaseSpace = toSpace.base ?? toSpace;
 
+  // this is something we may support in future, if there is a nice
+  // zero-allocation way of achieving it
+  if (fromSpace.base || toBaseSpace.base) {
+    throw new Error(`Currently only base of depth=1 is supported`);
+  }
+
   if (fromBaseSpace === toBaseSpace) {
     // do nothing, spaces are the same
   } else {
@@ -220,39 +226,47 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
     if (fromBaseSpace.id === "oklab") {
       let mat = toBaseSpace.fromLMS_M;
       if (!mat) {
-        // space doesn't support direct
+        // space doesn't support direct from OKLAB
         // let's convert OKLab to XYZ and then use that
         mat = XYZ.fromLMS_M;
         throughXYZ = true;
         xyzIn = true;
       }
+      // convert OKLAB to output (other space, or xyz)
       out = OKLab_to(out, mat, out);
     } else if (toBaseSpace.id === "oklab") {
       let mat = fromBaseSpace.toLMS_M;
       if (!mat) {
-        // space doesn't support direct
+        // space doesn't support direct to OKLAB
+        // we will need to use XYZ as connection, then convert to OKLAB
         throughXYZ = true;
         outputOklab = true;
       } else {
-        // direct from space to oklab
+        // direct from space to OKLAB
         out = OKLab_from(out, mat, out);
       }
     } else {
+      // any other spaces, we use XYZ D65 as a connection
       throughXYZ = true;
     }
 
     if (throughXYZ) {
       // First, convert to XYZ if we need to
       if (!xyzIn) {
-        if (!fromBaseSpace.toXYZ_M)
-          throw new Error(`no toXYZ_M on ${fromBaseSpace.id}`);
-        out = transform(out, fromBaseSpace.toXYZ_M, out);
+        if (fromBaseSpace.toXYZ) {
+          out = fromBaseSpace.toXYZ(out, out);
+        } else if (fromBaseSpace.toXYZ_M) {
+          out = transform(out, fromBaseSpace.toXYZ_M, out);
+        } else {
+          throw new Error(`no toXYZ or toXYZ_M on ${fromBaseSpace.id}`);
+        }
       }
 
       // Then, adapt D50 <-> D65 if we need to
       if (fromBaseSpace.adapt) {
         out = transform(out, fromBaseSpace.adapt.to, out);
-      } else if (toBaseSpace.adapt) {
+      }
+      if (toBaseSpace.adapt) {
         out = transform(out, toBaseSpace.adapt.from, out);
       }
 
@@ -260,10 +274,12 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
       if (!xyzOut) {
         if (outputOklab) {
           out = OKLab_from(out, XYZ.toLMS_M, out);
-        } else {
-          if (!toBaseSpace.fromXYZ_M)
-            throw new Error(`no fromXYZ_M on ${toBaseSpace.id}`);
+        } else if (toBaseSpace.fromXYZ) {
+          out = toBaseSpace.fromXYZ(out, out);
+        } else if (toBaseSpace.fromXYZ_M) {
           out = transform(out, toBaseSpace.fromXYZ_M, out);
+        } else {
+          throw new Error(`no fromXYZ or fromXYZ_M on ${toBaseSpace.id}`);
         }
       }
     }
