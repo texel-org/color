@@ -1,3 +1,8 @@
+// HSL space (hue, saturation, lightness within sRGB gamut)
+
+// Reference:
+// https://github.com/color-js/color.js/blob/cfe55d358adb6c2e23c8a897282adf42904fd32d/src/spaces/hsl.js
+
 import { sRGB, sRGBLinear } from "../../src/index.js";
 
 export const HSL = {

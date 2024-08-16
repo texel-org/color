@@ -1,6 +1,8 @@
 // Lab aka CIELAB aka L*a*b* (uses a D50 WHITE_D50 point and has to be adapted)
 // refer to CSS Color Module Level 4 Spec for more details
-// Source code reference: Colorjs.io
+
+// Reference:
+// https://github.com/color-js/color.js/blob/cfe55d358adb6c2e23c8a897282adf42904fd32d/src/spaces/lab.js
 import { D50_to_D65_M, D65_to_D50_M } from "../../src/index.js";
 
 // K * e  = 2^3 = 8
