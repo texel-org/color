@@ -307,6 +307,10 @@ test("should deserialize color string information", async (t) => {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
   });
+  t.deepEqual(deserialize("rgb(0 128 255 / 1e-2)"), {
+    coords: [0, 128 / 0xff, 255 / 0xff, 1e-2],
+    id: "srgb",
+  });
   t.deepEqual(deserialize("rgb(0 128 255 / 50%)"), {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
@@ -342,6 +346,10 @@ test("should deserialize color string information", async (t) => {
   t.deepEqual(deserialize("color(srgb-linear 0 0.5 1)"), {
     id: "srgb-linear",
     coords: [0, 0.5, 1],
+  });
+  t.deepEqual(deserialize("color(srgb-linear 0 1e-2 1)"), {
+    id: "srgb-linear",
+    coords: [0, 1e-2, 1],
   });
   t.deepEqual(deserialize("color(srgb-linear 0 0.5 1/0.25)"), {
     id: "srgb-linear",
