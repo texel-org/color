@@ -64,6 +64,7 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
   }
   const id = outputSpace.id;
   if (id == "srgb") {
+    // uses the legacy rgb() format
     const r = floatToByte(tmp3[0]);
     const g = floatToByte(tmp3[1]);
     const b = floatToByte(tmp3[2]);
@@ -72,7 +73,8 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
   } else {
     const alphaSuffix = alpha === 1 ? "" : ` / ${alpha}`;
     if (id == "oklab" || id == "oklch") {
-      return `${id}(${tmp3[0]} ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
+      // older versions of Safari don't support oklch with 0..1 L but do support %
+      return `${id}(${tmp3[0] * 100}% ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
     } else {
       return `color(${id} ${tmp3[0]} ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
     }
@@ -82,6 +84,13 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
 const stripAlpha = (coords) => {
   if (coords.length >= 4 && coords[3] === 1) return coords.slice(0, 3);
   return coords;
+};
+
+const parseFloatValue = str => parseFloat(str) || 0;
+
+const parseColorValue = (str, is255 = false) => {
+  if (is255) return clamp(parseFloatValue(str) / 0xff, 0, 0xff);
+  else return str.includes('%') ? parseFloatValue(str) / 100 : parseFloatValue(str);
 };
 
 export const deserialize = (input) => {
@@ -105,26 +114,19 @@ export const deserialize = (input) => {
       throw new Error(`could not parse color string ${input}`);
     }
     const fn = parts[1].toLowerCase();
-    if (/^rgba?$/i.test(fn)) {
-      const hasAlpha = fn == "rgba";
-      const coords = parts[2]
-        .split(",")
-        .map((v, i) =>
-          i < 3 ? clamp(parseInt(v, 10) || 0, 0, 255) / 255 : parseFloat(v)
-        );
-      const expectedLen = hasAlpha ? 4 : 3;
-      if (coords.length !== expectedLen) {
-        throw new Error(
-          `got ${fn} with incorrect number of coords, expected ${expectedLen}`
-        );
-      }
+    if (/^rgba?$/i.test(fn) && parts[2].includes(',')) {
+      const coords = parts[2].split(',').map((v, i) => {
+        return parseColorValue(v.trim(), i < 3)
+      });
       return {
         id: "srgb",
         coords: stripAlpha(coords),
       };
     } else {
       let id, coordsStrings;
-      if (fn === "color") {
+      let div255 = false;
+
+      if (/^color$/i.test(fn)) {
         const params =
           /([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s/]+)(?:\s?\/\s?([^\s]+))?/.exec(
             parts[2]
@@ -133,8 +135,15 @@ export const deserialize = (input) => {
           throw new Error(`could not parse color() function ${input}`);
         id = params[1].toLowerCase();
         coordsStrings = params.slice(2, 6);
-      } else if (/^(oklab|oklch)$/.test(fn)) {
-        id = fn;
+      } else {
+        if (/^(oklab|oklch)$/i.test(fn)) {
+          id = fn;
+        } else if (/rgba?/i.test(fn)) {
+          id = 'srgb';
+          div255 = true;
+        } else {
+          throw new Error(`unknown color function ${fn}`);
+        }
         const params =
           /([^\s]+)\s+([^\s]+)\s+([^\s/]+)(?:\s?\/\s?([^\s]+))?/.exec(parts[2]);
         if (!params)
@@ -146,7 +155,9 @@ export const deserialize = (input) => {
         coordsStrings = coordsStrings.slice(0, 3);
       }
 
-      const coords = coordsStrings.map((f) => parseFloat(f));
+      const coords = coordsStrings.map((f, i) => {
+        return parseColorValue(f.trim(), div255 && i < 3);
+      });
       if (coords.length < 3 || coords.length > 4)
         throw new Error(`invalid number of coordinates`);
       return {
@@ -156,6 +167,7 @@ export const deserialize = (input) => {
     }
   }
 };
+
 export const parse = (input, targetSpace, out = vec3()) => {
   if (!targetSpace)
     throw new Error(`must specify a target space to parse into`);
