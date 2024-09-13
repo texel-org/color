@@ -182,13 +182,15 @@ export const findGamutIntersectionOKLCH = (a, b, l1, c1, l0, cusp, gamut) => {
 
   // Find the intersection for upper and lower half separately
   if ((l1 - l0) * cusp[1] - (cusp[0] - l0) * c1 <= 0.0) {
+    const denom = (c1 * cusp[0] + cusp[1] * (l0 - l1));
     // Lower half
-    t = (cusp[1] * l0) / (c1 * cusp[0] + cusp[1] * (l0 - l1));
+    t = denom === 0 ? 0 : (cusp[1] * l0) / denom;
   } else {
     // Upper half
 
     // First intersect with triangle
-    t = (cusp[1] * (l0 - 1.0)) / (c1 * (cusp[0] - 1.0) + cusp[1] * (l0 - l1));
+    const denom = (c1 * (cusp[0] - 1.0) + cusp[1] * (l0 - l1));
+    t = denom === 0 ? 0 : (cusp[1] * (l0 - 1.0)) / denom;
 
     // Then one step Halley's method
     let dl = l1 - l0;

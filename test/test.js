@@ -44,6 +44,7 @@ import {
   DisplayP3Gamut,
   deserialize,
   parse,
+  MapToL,
 } from "../src/index.js";
 
 test("should convert XYZ in different whitepoints", async (t) => {
@@ -282,7 +283,6 @@ test("should serialize", async (t) => {
 // });
 
 test("should deserialize color string information", async (t) => {
-  
   t.deepEqual(deserialize("rgb(0, 128, 255)"), {
     coords: [0, 128 / 0xff, 255 / 0xff],
     id: "srgb",
@@ -450,6 +450,28 @@ test("should handle problematic coords", async (t) => {
       tolerance
     ),
     true
+  );
+
+  t.deepEqual(
+    convert([1, 0, 0], OKLCH, OKLab, undefined),
+    [1, 0, 0],
+    "handles [1,0,0] OKLCH to OKLab gamut map"
+  );
+
+  t.deepEqual(
+    arrayAlmostEqual(convert([1, 0, 0], OKLCH, sRGBLinear), [1, 1, 1]),
+    true,
+    "handles [1,1,1] OKLCH to sRGBLinear"
+  );
+  t.deepEqual(
+    gamutMapOKLCH([1, 0, 0], sRGBGamut, OKLCH, undefined, MapToL),
+    [1, 0, 0],
+    "handles [1,0,0] OKLCH to sRGB gamut map"
+  );
+  t.deepEqual(
+    gamutMapOKLCH([0, 0, 0], sRGBGamut, OKLCH, undefined, MapToL),
+    [0, 0, 0],
+    "handles [0,0,0] OKLCH to sRGB gamut map"
   );
 });
 
