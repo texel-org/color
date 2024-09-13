@@ -85,7 +85,7 @@ The return value is the new coordinates in the destination space; such as `[r,g,
 
 #### `output = gamutMapOKLCH(oklch, gamut = sRGBGamut, targetSpace = gamut.space, out = [0, 0, 0], mapping = MapToCuspL, [cusp])`
 
-Performs fast gamut mapping in OKLCH as [described by Björn Ottoson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's to the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
+Performs fast gamut mapping in OKLCH as [described by Björn Ottosson](https://bottosson.github.io/posts/gamutclipping/) (2021). This takes an input `[l,c,h]` coords in OKLCH space, and ensures the final result will lie within the specified color `gamut` (default `sRGBGamut`). You can further specify a different target space (which default's to the gamut's space), for example to get a linear-light sRGB and avoid the transfer function, or to keep the result in OKLCH:
 
 ```js
 import { gamutMapOKLCH, sRGBGamut, sRGBLinear, OKLCH } from "@texel/color";
