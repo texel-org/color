@@ -228,6 +228,8 @@ test("should gamut map", async (t) => {
 });
 
 test("should serialize", async (t) => {
+  t.deepEqual(RGBToHex([0, 1, 1, 0.5]), "#00ffff80");
+  t.deepEqual(serialize([0, 1, 1, 0.5], sRGB), "rgba(0, 255, 255, 0.5)");
   t.deepEqual(serialize([0, 0.5, 1], sRGB), "rgb(0, 128, 255)");
   t.deepEqual(serialize([0, 0.5, 1], sRGBLinear), "color(srgb-linear 0 0.5 1)");
   t.deepEqual(serialize([1, 0, 0], OKLCH, sRGB), "rgb(255, 255, 255)");
