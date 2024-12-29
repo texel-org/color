@@ -21,6 +21,10 @@ import { listColorSpaces, sRGB, XYZ } from "./spaces.js";
  */
 
 /**
+ * @typedef {number[][][]} ColorGamutCoefficients
+ */
+
+/**
  * @typedef {Object} ChromaticAdaptation
  * @property {Matrix3x3} from the matrix to convert from the source whitepoint to the destination whitepoint
  * @property {Matrix3x3} to the matrix to convert from the destination whitepoint to the source whitepoint
@@ -42,6 +46,7 @@ import { listColorSpaces, sRGB, XYZ } from "./spaces.js";
 /**
  * @typedef {Object} ColorGamut
  * @property {ColorSpace} space the color space associated with this color gamut
+ * @property {ColorGamutCoefficients} [coefficients] the coefficients used during gamut mapping from OKLab
  */
 
 const tmp3 = vec3();

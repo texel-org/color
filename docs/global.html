@@ -3490,7 +3490,7 @@ need to use the <a href="global.html#OKHSLToOKLab">OKHSLToOKLab</a> and <a href=
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line90">line 90</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line95">line 95</a>
             </span>
         </p>
     
@@ -3757,7 +3757,7 @@ need to use the <a href="global.html#OKHSLToOKLab">OKHSLToOKLab</a> and <a href=
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line75">line 75</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line80">line 80</a>
             </span>
         </p>
     
@@ -5334,7 +5334,7 @@ the RGB gamut, using the given coefficients.
   <td class="type">
   
       
-<code class="param-type">Array.&lt;Array.&lt;number>></code>
+<code class="param-type"><a href="global.html#Matrix3x3">Matrix3x3</a></code>
 
 
   
@@ -5359,7 +5359,7 @@ the RGB gamut, using the given coefficients.
   <td class="type">
   
       
-<code class="param-type">Array.&lt;Array.&lt;Array.&lt;number>>></code>
+<code class="param-type"><a href="global.html#ColorGamutCoefficients">ColorGamutCoefficients</a></code>
 
 
   
@@ -5894,7 +5894,7 @@ the RGB gamut, using the given coefficients.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line308">line 308</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line313">line 313</a>
             </span>
         </p>
     
@@ -6463,7 +6463,7 @@ the RGB gamut, using the given coefficients.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line438">line 438</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line443">line 443</a>
             </span>
         </p>
     
@@ -6637,7 +6637,7 @@ Note this does not return a <code>ColorSpace</code> object; you may want to use 
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line194">line 194</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line199">line 199</a>
             </span>
         </p>
     
@@ -9109,7 +9109,7 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line278">line 278</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line283">line 283</a>
             </span>
         </p>
     
@@ -9895,7 +9895,7 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line130">line 130</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line135">line 135</a>
             </span>
         </p>
     
@@ -10162,7 +10162,7 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line105">line 105</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line110">line 110</a>
             </span>
         </p>
     
@@ -10712,7 +10712,7 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line23">line 23</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line27">line 27</a>
             </span>
         </p>
     
@@ -10764,6 +10764,8 @@ using the specified gamut and converting to the target color space.
             <th>Type</th>
 
             
+            <th>Attributes</th>
+            
 
             
 
@@ -10789,10 +10791,47 @@ using the specified gamut and converting to the target color space.
     </td>
 
     
+        <td class="attributes">
+        
+
+        
+        </td>
+    
 
     
 
     <td class="description last">the color space associated with this color gamut</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>coefficients</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type"><a href="global.html#ColorGamutCoefficients">ColorGamutCoefficients</a></code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+
+    <td class="description last">the coefficients used during gamut mapping from OKLab</td>
 </tr>
 
         
@@ -10837,7 +10876,80 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line42">line 42</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line46">line 46</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<code class="param-type">Array.&lt;Array.&lt;Array.&lt;number>>></code>
+
+
+    </span>
+
+<h4 class="name" id="ColorGamutCoefficients">
+    <a class="href-link" href="#ColorGamutCoefficients">#</a>
+    
+    <span class="code-name">
+        ColorGamutCoefficients
+    </span>
+    
+</h4>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="core.js.html" class="button">View Source</a>
+            <span>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line23">line 23</a>
             </span>
         </p>
     
@@ -11218,7 +11330,7 @@ using the specified gamut and converting to the target color space.
         <p class="tag-source">
             <a href="core.js.html" class="button">View Source</a>
             <span>
-                <a href="core.js.html">core.js</a>, <a href="core.js.html#line29">line 29</a>
+                <a href="core.js.html">core.js</a>, <a href="core.js.html#line33">line 33</a>
             </span>
         </p>
     

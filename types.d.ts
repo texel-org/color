@@ -15,6 +15,7 @@ declare module "@texel/color" {
      * const vec = [ x, y, z ];
      */
     type Vector = number[];
+    type ColorGamutCoefficients = number[][][];
     /**
      * @property from - the matrix to convert from the source whitepoint to the destination whitepoint
      * @property to - the matrix to convert from the destination whitepoint to the source whitepoint
@@ -47,9 +48,11 @@ declare module "@texel/color" {
     };
     /**
      * @property space - the color space associated with this color gamut
+     * @property [coefficients] - the coefficients used during gamut mapping from OKLab
      */
     type ColorGamut = {
         space: ColorSpace;
+        coefficients?: ColorGamutCoefficients;
     };
     /**
      * Converts OKLab color to another color space.
@@ -156,7 +159,7 @@ declare module "@texel/color" {
      * @param okCoeff - The OKLab coefficients.
      * @returns The maximum saturation.
      */
-    function computeMaxSaturationOKLC(a: number, b: number, lmsToRgb: number[][], okCoeff: number[][][]): number;
+    function computeMaxSaturationOKLC(a: number, b: number, lmsToRgb: Matrix3x3, okCoeff: ColorGamutCoefficients): number;
     /**
      * Retrieves the LMS to RGB conversion matrix from the given gamut.
      * @param gamut - The gamut object.

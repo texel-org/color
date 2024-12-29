@@ -179,8 +179,8 @@ const setYZ = (v, a, b) => {
  * the RGB gamut, using the given coefficients.
  * @param {number} a The normalized a component of the hue.
  * @param {number} b The normalized b component of the hue.
- * @param {number[][]} lmsToRgb The LMS to RGB conversion matrix.
- * @param {number[][][]} okCoeff The OKLab coefficients.
+ * @param {Matrix3x3} lmsToRgb The LMS to RGB conversion matrix.
+ * @param {ColorGamutCoefficients} okCoeff The OKLab coefficients.
  * @returns {number} The maximum saturation.
  * @method
  * @category mapping
