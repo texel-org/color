@@ -4,8 +4,10 @@
   "description": "a minimal and modern color library",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./types.d.ts",
   "exports": {
-    "import": "./src/index.js"
+    "import": "./src/index.js",
+    "types": "./types.d.ts"
   },
   "license": "MIT",
   "author": {
