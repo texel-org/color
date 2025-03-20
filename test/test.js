@@ -164,6 +164,18 @@ test("should convert", async (t) => {
   );
 });
 
+test("should check gamut boundary", async (t) => {
+  const rgbIn = [1, 1, 1];
+  const rgbOut = [1.1, 1, 1];
+  const rgbAlmostIn = [1.005, 1, 1];
+  t.deepEqual(isRGBInGamut(rgbIn), true);
+  t.deepEqual(isRGBInGamut([0, 0, 0]), true);
+  t.deepEqual(isRGBInGamut([0, -0.1, 0]), false);
+  t.deepEqual(isRGBInGamut(rgbOut), false);
+  t.deepEqual(isRGBInGamut(rgbAlmostIn, 0.005), true);
+  t.deepEqual(isRGBInGamut(rgbAlmostIn, 0.00495), false);
+});
+
 test("should convert to okhsl", async (t) => {
   const okhsl = [30, 0.5, 0.5];
   const oklab = OKHSLToOKLab(okhsl, sRGBGamut);
