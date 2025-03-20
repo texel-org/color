@@ -52,14 +52,16 @@ const mix = (() => {
     // now do interpolation
     out[0] = lerp(tmpA[0], tmpB[0], t);
     out[1] = lerp(tmpA[1], tmpB[1], t);
-    if (interpolationSpace.id === "oklch") {
+    if (interpolationSpace.id === "oklch" || interpolationSpace.id === "slch") {
       // for cylindrical spaces, use a circular interpolation for Hue parameter
       // note if you decide to use a custom space like HSL as your interpolation space,
       // you'll have to use the first parameter instead...
       out[2] = lerpAngle(tmpA[2], tmpB[2], t);
-    } else if (interpolationSpace.id === "slch") {
-      out[2] = degToRad(lerpAngle(radToDeg(tmpA[2]), radToDeg(tmpB[2]), t));
-    } else {
+    }
+    // else if (interpolationSpace.id === "slch") {
+    //   out[2] = degToRad(lerpAngle(radToDeg(tmpA[2]), radToDeg(tmpB[2]), t));
+    // }
+    else {
       // otherwise can use a regular linear interpolation
       out[2] = lerp(tmpA[2], tmpB[2], t);
     }
@@ -90,19 +92,36 @@ const sketch = ({ context }) => {
     context.fillRect(0, 0, width, height);
 
     const A = {
-      space: sRGBLinear,
+      space: sRGB,
       coords: [1, 1, 1],
     };
+
+    const B = {
+      space: sRGB,
+      coords: [0, 0, 1],
+    };
+    // const A = {
+    //   space: sRGB,
+    //   coords: [Math.random(), Math.random(), Math.random()],
+    // };
+    // console.log(A.coords.map((n) => n.toFixed(2)));
 
     // const B = {
     //   space: sLab,
     //   coords: convert([100, 0.75, 0.5], OKHSL, sLab),
     // };
 
-    const B = {
-      space: sRGB,
-      coords: [0, 0, 0.5],
-    };
+    // const B = {
+    //   space: OKLab,
+    //   coords: [0.75, 0.05, 0.1],
+    // };
+    // console.log(convert(B.coords, OKLab, sRGB));
+
+    // const B = {
+    //   space: sRGB,
+    //   coords: [Math.random(), Math.random(), Math.random()],
+    // };
+    // console.log(B.coords.map((n) => n.toFixed(2)));
 
     const slices = width;
     const sliceWidth = width / slices;
@@ -110,12 +129,14 @@ const sketch = ({ context }) => {
     // the output space is whatever the canvas expects (sRGB or DisplayP3)
     const outputSpace = gamut.space;
     const types = [
-      { ramp: OKLab },
-      { ramp: OKLrab },
-      { ramp: sLab },
-      { ramp: Lab },
-      { hue: OKLCH },
-      { hue: sLCH },
+      { ramp: OKLCH },
+      { ramp: sLCH },
+      // { ramp: OKLab },
+      // { ramp: OKLrab },
+      // { ramp: sLab },
+      // { ramp: Lab },
+      // { hue: OKLCH },
+      // { hue: sLCH },
     ];
     for (let j = 0; j < types.length; j++) {
       const type = types[j];
