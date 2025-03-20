@@ -83,6 +83,7 @@ function ramp(a, b, steps = 4, outputSpace = sRGB, interpolationSpace = OKLab) {
 const sketch = ({ context }) => {
   const { colorSpace = "srgb" } = context.getContextAttributes();
   const gamut = colorSpace === "srgb" ? sRGBGamut : DisplayP3Gamut;
+  const mapping = MapToL;
 
   return ({ context, width, height }) => {
     context.fillStyle = "white";
@@ -103,7 +104,6 @@ const sketch = ({ context }) => {
       coords: [0, 0, 0.5],
     };
 
-    const mapping = MapToL;
     const slices = width;
     const sliceWidth = width / slices;
 

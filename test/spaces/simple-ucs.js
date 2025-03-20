@@ -6,6 +6,8 @@ import {
   XYZ,
   constrainAngle,
   degToRad,
+  OKLab,
+  OKLCH,
 } from "../../src/index.js";
 
 export const XYZ_D65_to_sLMS_M = [
@@ -156,3 +158,33 @@ export const sLCH = {
 //   console.log("Lab Bounds", labBounds);
 //   console.log("LCH Bounds", lchBounds);
 // }
+
+// function bench() {
+//   // rough benchmark - 4 channel 4K image
+//   const iters = 4096 * 4096 * 4;
+//   const vec = [0, 0, 0];
+//   console.time("sLab");
+//   for (let i = 0; i < iters; i++) {
+//     convert(vec, sLab, XYZ, vec);
+//   }
+//   console.timeEnd("sLab");
+
+//   console.time("OKLab");
+//   for (let i = 0; i < iters; i++) {
+//     convert(vec, OKLab, XYZ, vec);
+//   }
+//   console.timeEnd("OKLab");
+
+//   console.time("sLCH");
+//   for (let i = 0; i < iters; i++) {
+//     convert(vec, sLCH, XYZ, vec);
+//   }
+//   console.timeEnd("sLCH");
+
+//   console.time("OKLCH");
+//   for (let i = 0; i < iters; i++) {
+//     convert(vec, OKLCH, XYZ, vec);
+//   }
+//   console.timeEnd("OKLCH");
+// }
+// bench();

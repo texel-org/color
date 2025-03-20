@@ -15,8 +15,8 @@ const settings = {
   duration: 10,
   fps: 12,
   playbackRate: "throttle",
-  animate: true,
-  dimensions: [256, 256],
+  // animate: true,
+  dimensions: [512, 512],
 };
 
 const sketch = ({ context }) => {
@@ -29,18 +29,18 @@ const sketch = ({ context }) => {
     context.fillStyle = "gray";
     context.fillRect(0, 0, width, height);
 
-    const theta = playhead * 360;
+    // const theta = playhead * 360;
 
     // sLCH exhibits an unusual behavior in some blue hue planes
     // for example here, there is a 'slice' or 'gap' where it goes out of sRGB gamut
-    // const theta = 251.42954999947546;
+    const theta = 251.43;
+    const inputSpace = sLCH;
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const u = x / width;
         const v = y / height;
 
-        const inputSpace = sLCH;
         let lch;
         if (inputSpace.id === "slch") {
           const L = (1 - v) * 100;
@@ -68,6 +68,17 @@ const sketch = ({ context }) => {
         }
       }
     }
+
+    context.fillStyle = "white";
+    const fontSize = height * 0.03;
+    context.font = `${fontSize}px monospace`;
+    context.textAlign = "right";
+    context.textBaseline = "bottom";
+    context.fillText(
+      `${inputSpace.id == "slch" ? "sUCS" : "OKLab"} - ${theta.toFixed(2)}º`,
+      width - fontSize,
+      height - fontSize
+    );
   };
 };
 
