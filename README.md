@@ -342,7 +342,7 @@ The library currently only exposes `{ lerp, lerpAngle }` functions. To interpola
 
 ## Custom Color Spaces
 
-You can build custom color space objects to extend this library, such as adding support for CIELab and HSL. See [test/spaces/lab.js](./test/spaces/lab.js) and [test/spaces/hsl.js](./test/spaces/hsl.js) for examples of this. Some of these spaces may be added to the library at a later point, although the current focus is on "modern" spaces (such as OKLab that has largely made CIELab and HSL obsolete). Documentaiton on custom color spaces is WIP.
+You can build custom color space objects to extend this library, such as adding support for CIELab and HSL. See [test/spaces/lab.js](./test/spaces/lab.js) and [test/spaces/hsl.js](./test/spaces/hsl.js) for examples of this. Some of these spaces may be added to the library at a later point, although the current focus is on "modern" spaces (such as OKLab that has largely made CIELab and HSL obsolete). Documentation on custom color spaces is WIP.
 
 ## Notes
 
@@ -350,9 +350,9 @@ You can build custom color space objects to extend this library, such as adding 
 
 [Colorjs](https://colorjs.io/) is fantastic and perhaps the current leading standard in JavaScript, but it's not very practical for creative coding and real-time web applications, where the requirements are often (1) leaner codebases, (2) highly optimized, and (3) minimal GC thrashing.
 
-Colorjs, and simialrly, [Culori](https://culorijs.org/), are focused on matching CSS spec, which means it will very likely continue to grow in complexity over time, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and ~60 times faster than culori).
+Colorjs, and similarly, [Culori](https://culorijs.org/), are focused on matching CSS spec, which means it will very likely continue to grow in complexity over time, and performance will often be marred (for example, `@texel/color` cusp intersection gamut mapping is ~125 times faster than Colorjs and ~60 times faster than culori).
 
-There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spacse such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 whitepoints in XYZ).
+There are many other options such as [color-space](https://www.npmjs.com/package/color-space) or [color-convert](https://www.npmjs.com/package/color-convert), however, these do not support modern spaces such as OKLab and OKHSL, and/or have dubious levels of accuracy (many libraries, for example, do not distinguish between D50 and D65 whitepoints in XYZ).
 
 ### Supported Spaces
 
