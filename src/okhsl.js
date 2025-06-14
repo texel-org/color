@@ -371,7 +371,7 @@ export const OKLabToOKHSV = (lab, gamut = sRGBGamut, out = vec3()) => {
     s = ((s0 + tMax) * cv) / (tMax * s0 + tMax * k * cv);
   }
 
-  // unlike colorjs.io, we are not worknig with none-types
+  // unlike colorjs.io, we are not working with none-types
   // if (Math.abs(s) < ε || v === 0.0) {
   //   h = null;
   // }
