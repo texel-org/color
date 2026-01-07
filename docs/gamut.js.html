@@ -432,7 +432,7 @@ export const gamutMapOKLCH = (
   const lmsToRgb = gamutSpaceBase.fromLMS_M;
   if (!lmsToRgb) {
     throw new Error(
-      `color space ${outSpace.id} has no base with LMS to RGB matrix`
+      `color space ${gamutSpaceBase.id} has no base with LMS to RGB matrix`
     );
   }
 
@@ -493,7 +493,7 @@ export const gamutMapOKLCH = (
     //    will be applied. The OKLCH result is _basically_ in gamut, but not exactly; you'll need to clip at final stage.
     // I've documented this behaviour in the readme.
     const targetSpaceBase = targetSpace.base ?? targetSpace;
-    if (targetSpaceBase.id == "oklab") {
+    if (targetSpaceBase.id === "oklab") {
       return convert(out, OKLCH, targetSpace, out);
     }
 

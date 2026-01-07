@@ -84,6 +84,8 @@ export const RGBToHex = (rgb) =>
 /**
  * @method
  * @deprecated Use RGBToHex instead.
+ * @param {Vector} rgb The RGB array.
+ * @returns {string} The hex color string.
  * @category rgb
  */
 export const RGBtoHex = RGBToHex;

@@ -179,11 +179,11 @@ export const RGBtoHex = RGBToHex;
  * Checks if an RGB color is within the gamut.
  * @method
  * @param {Vector} lrgb The linear RGB array.
- * @param {number} [ep=GAMUT_EPSILON] The epsilon value for comparison.
+ * @param {number} [ep=0] The epsilon value for comparison.
  * @returns {boolean} True if the color is within the gamut, false otherwise.
  * @category rgb
  */
-export const isRGBInGamut = (lrgb, ep = GAMUT_EPSILON) => {
+export const isRGBInGamut = (lrgb, ep = 0) => {
   const r = lrgb[0];
   const g = lrgb[1];
   const b = lrgb[2];
