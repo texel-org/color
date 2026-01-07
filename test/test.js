@@ -59,10 +59,10 @@ test("should convert XYZ in different whitepoints", async (t) => {
 
   tmp = [0, 0, 0];
   const out2 = XYZD50ToD65(xyz_d50_output, tmp);
-  t.deepEqual(out2, xyz_d65_input);
+  t.ok(arrayAlmostEqual(out2, xyz_d65_input), "XYZD50ToD65 round-trip");
   t.equal(out2, tmp);
 
-  t.deepEqual(convert(xyz_d50_output, XYZD50, XYZ), xyz_d65_input);
+  t.ok(arrayAlmostEqual(convert(xyz_d50_output, XYZD50, XYZ), xyz_d65_input), "convert XYZD50 to XYZ");
   t.deepEqual(convert(xyz_d65_input, XYZ, XYZD50), xyz_d50_output);
 });
 

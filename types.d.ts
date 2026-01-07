@@ -386,11 +386,15 @@ declare module "@texel/color" {
      * @returns The hex color string.
      */
     function RGBToHex(rgb: Vector): string;
-    function RGBtoHex(): void;
+    /**
+     * @param rgb - The RGB array.
+     * @returns The hex color string.
+     */
+    function RGBtoHex(rgb: Vector): string;
     /**
      * Checks if an RGB color is within the gamut.
      * @param lrgb - The linear RGB array.
-     * @param [ep = GAMUT_EPSILON] - The epsilon value for comparison.
+     * @param [ep = 0] - The epsilon value for comparison.
      * @returns True if the color is within the gamut, false otherwise.
      */
     function isRGBInGamut(lrgb: Vector, ep?: number): boolean;

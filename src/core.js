@@ -146,7 +146,7 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
     convert(input, inputSpace, outputSpace, tmp3);
   }
   const id = outputSpace.id;
-  if (id == "srgb") {
+  if (id === "srgb") {
     // uses the legacy rgb() format
     const r = floatToByte(tmp3[0]);
     const g = floatToByte(tmp3[1]);
@@ -155,7 +155,7 @@ export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
     return alpha === 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
   } else {
     const alphaSuffix = alpha === 1 ? "" : ` / ${alpha}`;
-    if (id == "oklab" || id == "oklch") {
+    if (id === "oklab" || id === "oklch") {
       // older versions of Safari don't support oklch with 0..1 L but do support %
       return `${id}(${tmp3[0] * 100}% ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
     } else {
@@ -296,7 +296,7 @@ export const parse = (input, targetSpace, out = vec3()) => {
   // store alpha
   if (alpha !== 1) out[3] = alpha;
   // reduce to 3D
-  if (alpha == 1 && out.length === 4) out.pop();
+  if (alpha === 1 && out.length === 4) out.pop();
   return out;
 };
 
@@ -318,7 +318,7 @@ export const convert = (input, fromSpace, toSpace, out = vec3()) => {
   if (!toSpace) throw new Error(`must specify a toSpace`);
 
   // special case: no conversion needed
-  if (fromSpace == toSpace) {
+  if (fromSpace === toSpace) {
     return out;
   }
 

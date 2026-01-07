@@ -4,3 +4,4 @@ node_modules
 .DS_Store
 __pycache__
 test/logo.png
+.claude/
