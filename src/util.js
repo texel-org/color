@@ -65,9 +65,9 @@ export const hexToRGB = (str, out = vec3()) => {
     hex = hex.slice(0, 6);
   }
   const rgb = parseInt(hex, 16);
-  out[0] = ((rgb >> 16) & 0xff) / 0xff;
-  out[1] = ((rgb >> 8) & 0xff) / 0xff;
-  out[2] = (rgb & 0xff) / 0xff;
+  out[0] = byteToFloat((rgb >> 16) & 0xff);
+  out[1] = byteToFloat((rgb >> 8) & 0xff);
+  out[2] = byteToFloat(rgb & 0xff);
   return out;
 };
 
@@ -178,13 +178,23 @@ export const XYZ_to_xyY = (arg, out = vec3()) => {
 };
 
 /**
- * Converts a float value to a byte value.
+ * Converts a float value in the range 0..1 to a byte value in the range 0..255, rounded and clamped.
  * @method
  * @param {number} n The float value.
  * @returns {number} The byte value.
  * @category utils
  */
 export const floatToByte = (n) => clamp(Math.round(255 * n), 0, 255);
+
+/**
+ * Converts a byte value in the range 0..255 to a float value in the range 0..1.
+ * This is the inverse of {@link floatToByte}; the two round-trip exactly for all 256 byte values.
+ * @method
+ * @param {number} n The byte value.
+ * @returns {number} The float value.
+ * @category utils
+ */
+export const byteToFloat = (n) => n / 0xff;
 
 /**
  * Creates a new vec3 array.

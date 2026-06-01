@@ -259,6 +259,10 @@ In addition to the core API, the module exports a number of utilities:
 
 Converts the float in range 0..1 to a byte in range 0..255, rounded and clamped.
 
+#### `f = byteToFloat(b)`
+
+Converts the byte in range 0..255 to a float in range 0..1. This is the inverse of `floatToByte`; the two round-trip exactly for all 256 byte values.
+
 #### `out = XYZ_to_xyY(xyz, out=[0,0,0])`
 
 Converts the XYZ coordinates to xyY form, storing the result in `out` if specified before returning.

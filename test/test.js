@@ -3,6 +3,7 @@ import Color from "colorjs.io";
 import arrayAlmostEqual from "./almost-equal.js";
 import {
   floatToByte,
+  byteToFloat,
   hexToRGB,
   isRGBInGamut,
   RGBToHex,
@@ -389,6 +390,16 @@ test("utils", async (t) => {
   const tmp = [0, 0, 0];
   hexToRGB("#0080ff", tmp);
   t.deepEqual(tmp, [0, 0.5019607843137255, 1]);
+
+  // byteToFloat is the inverse of floatToByte and round-trips exactly
+  t.deepEqual(byteToFloat(0), 0);
+  t.deepEqual(byteToFloat(255), 1);
+  t.deepEqual(byteToFloat(128), 0.5019607843137255);
+  let roundTrips = true;
+  for (let b = 0; b <= 255; b++) {
+    if (floatToByte(byteToFloat(b)) !== b) roundTrips = false;
+  }
+  t.equal(roundTrips, true, "floatToByte(byteToFloat(b)) === b for all bytes");
 });
 
 test("should convert D65 based to D50 based color spaces", async (t) => {

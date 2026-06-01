@@ -420,11 +420,18 @@ declare module "@texel/color" {
      */
     function XYZ_to_xyY(arg: Vector, out?: Vector): Vector;
     /**
-     * Converts a float value to a byte value.
+     * Converts a float value in the range 0..1 to a byte value in the range 0..255, rounded and clamped.
      * @param n - The float value.
      * @returns The byte value.
      */
     function floatToByte(n: number): number;
+    /**
+     * Converts a byte value in the range 0..255 to a float value in the range 0..1.
+     * This is the inverse of {@link floatToByte}; the two round-trip exactly for all 256 byte values.
+     * @param n - The byte value.
+     * @returns The float value.
+     */
+    function byteToFloat(n: number): number;
     /**
      * Creates a new vec3 array.
      * @returns The vec3 array.
