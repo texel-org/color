@@ -21,8 +21,10 @@ export * from "./spaces/prophoto-rgb.js";
 // hoisted to module scope so listColorSpaces()/listColorGamuts() return a
 // shared, stable reference instead of allocating a fresh array on every call
 // (relevant for hot paths such as parse()). Frozen so the shared reference
-// cannot be mutated by callers.
-const colorSpaces = Object.freeze([
+// cannot be mutated by callers. The /* @__PURE__ */ annotation tells bundlers
+// the Object.freeze() call is side-effect-free, so these constants (and the
+// spaces they reference) still tree-shake away when listColorSpaces() is unused.
+const colorSpaces = /* @__PURE__ */ Object.freeze([
   XYZ, // D65
   XYZD50,
   OKLab,
@@ -41,7 +43,7 @@ const colorSpaces = Object.freeze([
   ProPhotoRGBLinear,
 ]);
 
-const colorGamuts = Object.freeze([
+const colorGamuts = /* @__PURE__ */ Object.freeze([
   sRGBGamut,
   DisplayP3Gamut,
   Rec2020Gamut,
