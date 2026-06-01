@@ -18,41 +18,47 @@ export * from "./spaces/rec2020.js";
 export * from "./spaces/a98-rgb.js";
 export * from "./spaces/prophoto-rgb.js";
 
+// hoisted to module scope so listColorSpaces()/listColorGamuts() return a
+// shared, stable reference instead of allocating a fresh array on every call
+// (relevant for hot paths such as parse()). Treat the returned arrays as
+// read-only.
+const colorSpaces = [
+  XYZ, // D65
+  XYZD50,
+  OKLab,
+  OKLCH,
+  OKHSV,
+  OKHSL,
+  sRGB,
+  sRGBLinear,
+  DisplayP3,
+  DisplayP3Linear,
+  Rec2020,
+  Rec2020Linear,
+  A98RGB,
+  A98RGBLinear,
+  ProPhotoRGB,
+  ProPhotoRGBLinear,
+];
+
+const colorGamuts = [sRGBGamut, DisplayP3Gamut, Rec2020Gamut, A98RGBGamut];
+
 /**
- * Returns a list of color spaces.
+ * Returns a list of color spaces. The returned array is shared and should be
+ * treated as read-only.
  *
  * @method
  * @returns {ColorSpace[]} An array of color space objects.
  * @category core
  */
-export const listColorSpaces = () => {
-  return [
-    XYZ, // D65
-    XYZD50,
-    OKLab,
-    OKLCH,
-    OKHSV,
-    OKHSL,
-    sRGB,
-    sRGBLinear,
-    DisplayP3,
-    DisplayP3Linear,
-    Rec2020,
-    Rec2020Linear,
-    A98RGB,
-    A98RGBLinear,
-    ProPhotoRGB,
-    ProPhotoRGBLinear,
-  ];
-};
+export const listColorSpaces = () => colorSpaces;
 
 /**
- * Returns a list of color gamuts.
+ * Returns a list of color gamuts. The returned array is shared and should be
+ * treated as read-only.
  *
  * @method
  * @returns {ColorGamut[]} An array of color gamut objects.
  * @category core
  */
-export const listColorGamuts = () => {
-  return [sRGBGamut, DisplayP3Gamut, Rec2020Gamut, A98RGBGamut];
-};
+export const listColorGamuts = () => colorGamuts;
