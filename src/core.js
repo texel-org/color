@@ -134,18 +134,16 @@ const toPrecision = (n, precision) =>
  * @param {Vector} input The input color.
  * @param {ColorSpace} inputSpace The input color space.
  * @param {ColorSpace} [outputSpace=inputSpace] The output color space.
- * @param {number} [precision] Optional number of significant digits to round each (non-sRGB) coordinate to; defaults to full precision.
+ * @param {Object} [opts] Optional settings.
+ * @param {number} [opts.precision] Number of significant digits to round each (non-sRGB) coordinate to; defaults to full precision.
  * @returns {string} The serialized color string.
  * @method
  * @category core
  */
-export const serialize = (
-  input,
-  inputSpace,
-  outputSpace = inputSpace,
-  precision
-) => {
+export const serialize = (input, inputSpace, outputSpace = inputSpace, opts) => {
   if (!inputSpace) throw new Error(`must specify an input space`);
+  // only read precision when an options object is actually passed
+  const precision = opts ? opts.precision : undefined;
   // extract alpha if present
   let alpha = 1;
   if (input.length > 3) {
