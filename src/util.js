@@ -57,14 +57,15 @@ export const constrainAngle = (angle) => ((angle % 360) + 360) % 360;
  */
 export const hexToRGB = (str, out = vec3()) => {
   let hex = str.replace(/#/, "");
-  if (hex.length === 3) {
-    // expand shorthand
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-  } else if (hex.length > 6) {
-    // discard alpha
-    hex = hex.slice(0, 6);
+  if (hex.length <= 4) {
+    // expand shorthand (#rgb or #rgba) by doubling each nibble
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("");
   }
-  const rgb = parseInt(hex, 16);
+  // discard alpha if present (#rrggbbaa), keeping just the RGB triplet
+  const rgb = parseInt(hex.slice(0, 6), 16);
   out[0] = ((rgb >> 16) & 0xff) / 0xff;
   out[1] = ((rgb >> 8) & 0xff) / 0xff;
   out[2] = (rgb & 0xff) / 0xff;

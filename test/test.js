@@ -349,6 +349,26 @@ test("should deserialize color string information", async (t) => {
     id: "srgb",
     coords: [1, 0, 0.8, 0.8],
   });
+  // shorthand #rgb expands by doubling each nibble
+  t.deepEqual(deserialize("#f0c"), {
+    id: "srgb",
+    coords: [1, 0, 0.8],
+  });
+  // shorthand #rgba carries an alpha nibble
+  t.deepEqual(deserialize("#f0cc"), {
+    id: "srgb",
+    coords: [1, 0, 0.8, 0.8],
+  });
+  // opaque shorthand alpha (f -> ff -> 1) collapses back to 3 coords
+  t.deepEqual(deserialize("#f00f"), {
+    id: "srgb",
+    coords: [1, 0, 0],
+  });
+  // rgb() bytes are normalised into 0..1 and clamped
+  t.deepEqual(deserialize("rgb(300, -20, 255)"), {
+    id: "srgb",
+    coords: [1, 0, 1],
+  });
   t.deepEqual(deserialize("COLOR(sRGB-Linear 0 0.5 1)"), {
     id: "srgb-linear",
     coords: [0, 0.5, 1],
