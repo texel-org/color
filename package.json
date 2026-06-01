@@ -3,12 +3,18 @@
   "version": "1.1.11",
   "description": "a minimal and modern color library",
   "type": "module",
+  "sideEffects": false,
   "main": "./src/index.js",
   "types": "./types.d.ts",
   "exports": {
     "import": "./src/index.js",
     "types": "./types.d.ts"
   },
+  "files": [
+    "src",
+    "types.d.ts",
+    "DOC.md"
+  ],
   "license": "MIT",
   "author": {
     "name": "Matt DesLauriers",
