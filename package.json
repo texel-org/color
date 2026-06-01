@@ -3,12 +3,23 @@
   "version": "1.1.11",
   "description": "a minimal and modern color library",
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./src/index.js",
   "types": "./types.d.ts",
   "exports": {
-    "import": "./src/index.js",
-    "types": "./types.d.ts"
+    ".": {
+      "types": "./types.d.ts",
+      "import": "./src/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./src/index.js"
+    }
   },
+  "files": [
+    "src",
+    "dist",
+    "types.d.ts",
+    "DOC.md"
+  ],
   "license": "MIT",
   "author": {
     "name": "Matt DesLauriers",
@@ -33,6 +44,8 @@
   },
   "scripts": {
     "visualize": "canvas-sketch-cli test/canvas-graph.js --open",
+    "build": "esbuild src/index.js --bundle --format=cjs --platform=node --target=node12 --outfile=dist/index.cjs",
+    "prepack": "npm run build",
     "docs": "jsdoc src -r -t node_modules/better-docs -c tools/.jsdoc.json -d docs -R DOC.md",
     "types": "jsdoc src -r -t node_modules/tsd-jsdoc/dist -c tools/.jsdoc.types.json -d .",
     "test": "node test/test.js | faucet",

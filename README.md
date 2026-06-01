@@ -20,6 +20,12 @@ Use [npm](https://npmjs.com/) to install and import the module.
 npm install @texel/color --save
 ```
 
+The package is primarily distributed as ESM (which bundlers can tree-shake). A CommonJS build is also published for legacy Node and CJS-only tooling such as browserify:
+
+```js
+const { convert, OKLCH, sRGB } = require("@texel/color");
+```
+
 ## Examples
 
 Converting OKLCH (cylindrical form of OKLab) to sRGB:
