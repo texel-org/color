@@ -172,11 +172,14 @@ const stripAlpha = (coords) => {
 const parseFloatValue = (str) => parseFloat(str) || 0;
 
 const parseColorValue = (str, is255 = false) => {
+  // a percentage always maps to a 0..1 fraction, regardless of context;
+  // clamp in the rgb() byte context to match its 0..1 channel range
+  if (str.includes("%")) {
+    const v = parseFloatValue(str) / 100;
+    return is255 ? clamp(v, 0, 1) : v;
+  }
   if (is255) return clamp(parseFloatValue(str) / 0xff, 0, 1);
-  else
-    return str.includes("%")
-      ? parseFloatValue(str) / 100
-      : parseFloatValue(str);
+  return parseFloatValue(str);
 };
 
 /**

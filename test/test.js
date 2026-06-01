@@ -309,6 +309,19 @@ test("should deserialize color string information", async (t) => {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
   });
+  // percentage rgb() channels map to a 0..1 fraction (not /255)
+  t.deepEqual(deserialize("rgb(50% 0% 100%)"), {
+    coords: [0.5, 0, 1],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("rgb(50%, 0%, 100%)"), {
+    coords: [0.5, 0, 1],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("rgba(50% 0% 100% / 50%)"), {
+    coords: [0.5, 0, 1, 0.5],
+    id: "srgb",
+  });
   t.deepEqual(deserialize("rgb(0, 128, 255, 0.5)"), {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
