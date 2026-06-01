@@ -172,11 +172,14 @@ const stripAlpha = (coords) => {
 const parseFloatValue = (str) => parseFloat(str) || 0;
 
 const parseColorValue = (str, is255 = false) => {
-  if (is255) return clamp(parseFloatValue(str) / 0xff, 0, 0xff);
-  else
-    return str.includes("%")
-      ? parseFloatValue(str) / 100
-      : parseFloatValue(str);
+  // a percentage always maps to a 0..1 fraction, regardless of context;
+  // clamp in the rgb() byte context to match its 0..1 channel range
+  if (str.includes("%")) {
+    const v = parseFloatValue(str) / 100;
+    return is255 ? clamp(v, 0, 1) : v;
+  }
+  if (is255) return clamp(parseFloatValue(str) / 0xff, 0, 1);
+  return parseFloatValue(str);
 };
 
 /**
@@ -202,10 +205,16 @@ export const deserialize = (input) => {
   }
   input = input.trim();
   if (input.charAt(0) === "#") {
-    const rgbIn = input.slice(0, 7);
-    let alphaByte = input.length > 7 ? parseInt(input.slice(7, 9), 16) : 255;
-    let alpha = isNaN(alphaByte) ? 1 : alphaByte / 255;
-    const coords = hexToRGB(rgbIn);
+    const hex = input.slice(1);
+    // alpha is the 4th nibble (#rgba) or last byte (#rrggbbaa) when present
+    let alpha = 1;
+    if (hex.length === 4 || hex.length === 8) {
+      const alphaHex =
+        hex.length === 4 ? hex.charAt(3).repeat(2) : hex.slice(6, 8);
+      const alphaByte = parseInt(alphaHex, 16);
+      if (!isNaN(alphaByte)) alpha = alphaByte / 255;
+    }
+    const coords = hexToRGB(hex);
     if (alpha !== 1) coords.push(alpha);
     return {
       id: "srgb",

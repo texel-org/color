@@ -309,6 +309,19 @@ test("should deserialize color string information", async (t) => {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
   });
+  // percentage rgb() channels map to a 0..1 fraction (not /255)
+  t.deepEqual(deserialize("rgb(50% 0% 100%)"), {
+    coords: [0.5, 0, 1],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("rgb(50%, 0%, 100%)"), {
+    coords: [0.5, 0, 1],
+    id: "srgb",
+  });
+  t.deepEqual(deserialize("rgba(50% 0% 100% / 50%)"), {
+    coords: [0.5, 0, 1, 0.5],
+    id: "srgb",
+  });
   t.deepEqual(deserialize("rgb(0, 128, 255, 0.5)"), {
     coords: [0, 128 / 0xff, 255 / 0xff, 0.5],
     id: "srgb",
@@ -348,6 +361,26 @@ test("should deserialize color string information", async (t) => {
   t.deepEqual(deserialize("#ff00cccc"), {
     id: "srgb",
     coords: [1, 0, 0.8, 0.8],
+  });
+  // shorthand #rgb expands by doubling each nibble
+  t.deepEqual(deserialize("#f0c"), {
+    id: "srgb",
+    coords: [1, 0, 0.8],
+  });
+  // shorthand #rgba carries an alpha nibble
+  t.deepEqual(deserialize("#f0cc"), {
+    id: "srgb",
+    coords: [1, 0, 0.8, 0.8],
+  });
+  // opaque shorthand alpha (f -> ff -> 1) collapses back to 3 coords
+  t.deepEqual(deserialize("#f00f"), {
+    id: "srgb",
+    coords: [1, 0, 0],
+  });
+  // rgb() bytes are normalised into 0..1 and clamped
+  t.deepEqual(deserialize("rgb(300, -20, 255)"), {
+    id: "srgb",
+    coords: [1, 0, 1],
   });
   t.deepEqual(deserialize("COLOR(sRGB-Linear 0 0.5 1)"), {
     id: "srgb-linear",
