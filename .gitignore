@@ -5,3 +5,4 @@ node_modules
 __pycache__
 test/logo.png
 .claude/
+dist

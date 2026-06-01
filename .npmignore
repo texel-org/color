@@ -1,9 +1,0 @@
-bower_components
-node_modules
-*.log
-.DS_Store
-.npmignore
-LICENSE.md
-tools/
-test/
-docs/
