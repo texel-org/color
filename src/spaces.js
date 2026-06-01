@@ -20,9 +20,9 @@ export * from "./spaces/prophoto-rgb.js";
 
 // hoisted to module scope so listColorSpaces()/listColorGamuts() return a
 // shared, stable reference instead of allocating a fresh array on every call
-// (relevant for hot paths such as parse()). Treat the returned arrays as
-// read-only.
-const colorSpaces = [
+// (relevant for hot paths such as parse()). Frozen so the shared reference
+// cannot be mutated by callers.
+const colorSpaces = Object.freeze([
   XYZ, // D65
   XYZD50,
   OKLab,
@@ -39,13 +39,18 @@ const colorSpaces = [
   A98RGBLinear,
   ProPhotoRGB,
   ProPhotoRGBLinear,
-];
+]);
 
-const colorGamuts = [sRGBGamut, DisplayP3Gamut, Rec2020Gamut, A98RGBGamut];
+const colorGamuts = Object.freeze([
+  sRGBGamut,
+  DisplayP3Gamut,
+  Rec2020Gamut,
+  A98RGBGamut,
+]);
 
 /**
- * Returns a list of color spaces. The returned array is shared and should be
- * treated as read-only.
+ * Returns a list of color spaces. The returned array is a shared, frozen
+ * (immutable) reference.
  *
  * @method
  * @returns {ColorSpace[]} An array of color space objects.
@@ -54,8 +59,8 @@ const colorGamuts = [sRGBGamut, DisplayP3Gamut, Rec2020Gamut, A98RGBGamut];
 export const listColorSpaces = () => colorSpaces;
 
 /**
- * Returns a list of color gamuts. The returned array is shared and should be
- * treated as read-only.
+ * Returns a list of color gamuts. The returned array is a shared, frozen
+ * (immutable) reference.
  *
  * @method
  * @returns {ColorGamut[]} An array of color gamut objects.
