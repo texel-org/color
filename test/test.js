@@ -260,6 +260,21 @@ test("should serialize", async (t) => {
     serialize([1, 0, 0, 0.4523], DisplayP3),
     "color(display-p3 1 0 0 / 0.4523)"
   );
+
+  // optional precision rounds long floats and trims trailing zeros
+  t.deepEqual(
+    serialize(convert([0, 0.5, 1], sRGB, sRGBLinear), sRGBLinear),
+    "color(srgb-linear 0 0.21404114048223255 1)"
+  );
+  t.deepEqual(
+    serialize(convert([0, 0.5, 1], sRGB, sRGBLinear), sRGBLinear, sRGBLinear, 5),
+    "color(srgb-linear 0 0.21404 1)"
+  );
+  // precision also applies to oklch lightness/alpha
+  t.deepEqual(
+    serialize([0.123456, 0.0654321, 123.456, 0.987654], OKLCH, OKLCH, 4),
+    "oklch(12.35% 0.06543 123.5 / 0.9877)"
+  );
 });
 
 // not yet finished
