@@ -280,12 +280,19 @@ export const deserialize = (input) => {
  * @method
  * @category core
  */
+// lazily-built id -> ColorSpace lookup for parse(); built once on first use
+// so the common conversion paths still tree-shake the full space list away
+let spaceByIdMap;
+const spaceById = () =>
+  spaceByIdMap ??
+  (spaceByIdMap = new Map(listColorSpaces().map((s) => [s.id, s])));
+
 export const parse = (input, targetSpace, out = vec3()) => {
   if (!targetSpace)
     throw new Error(`must specify a target space to parse into`);
 
   const { coords, id } = deserialize(input);
-  const space = listColorSpaces().find((f) => id === f.id);
+  const space = spaceById().get(id);
   if (!space) throw new Error(`could not find space with the id ${id}`);
   const alpha = coords.length === 4 ? coords[3] : 1;
 
