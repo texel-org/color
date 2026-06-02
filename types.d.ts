@@ -83,9 +83,11 @@ declare module "@texel/color" {
      * @param input - The input color.
      * @param inputSpace - The input color space.
      * @param [outputSpace = inputSpace] - The output color space.
+     * @param [opts] - Optional settings.
+     * @param [opts.precision] - Number of significant digits to round each (non-sRGB) coordinate to; defaults to full precision.
      * @returns The serialized color string.
      */
-    function serialize(input: Vector, inputSpace: ColorSpace, outputSpace?: ColorSpace): string;
+    function serialize(input: Vector, inputSpace: ColorSpace, outputSpace?: ColorSpace, opts?: { precision?: number }): string;
     /**
      * Deserializes a color string to an object with <code>id</code> (color space string) and <code>coords</code> (the vector, in 3 or 4 dimensions).
      * Note this does not return a <code>ColorSpace</code> object; you may want to use the example code below to map the string ID to a <code>ColorSpace</code>, but this will increase the size of your final bundle as it references all spaces.

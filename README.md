@@ -154,9 +154,16 @@ gamutMapOKLCH(oklch, gamut, gamut.space, out, MapToCuspL, cuspLC);
 
 The `a` and `b` can also be from OKLab coordinates, but must be normalized so `a^2 + b^2 == 1`.
 
-#### `str = serialize(coords, inputSpace, outputSpace = inputSpace)`
+#### `str = serialize(coords, inputSpace, outputSpace = inputSpace, opts)`
 
 Turns the specified `coords` (assumed to be in `inputSpace`) into a string, first converting if needed to the specified `outputSpace`. If the space is sRGB, a plain `rgb(r,g,b)` string (in bytes) will be used for browser compatibility and performance, otherwise a CSS color string will be returned. Note that not all spaces, such as certain linear spaces, are currently supported by CSS. You can optionally pass an `alpha` component (0..1 range) as the fourth element in the `coords` array for it to be considered.
+
+You can also pass an optional `opts` object with a `precision` (number of significant digits) to round each non-sRGB coordinate, producing shorter strings; by default full floating-point precision is used.
+
+```js
+serialize([0, 0.214041, 1], sRGBLinear); // "color(srgb-linear 0 0.214041 1)"
+serialize([0, 0.214041, 1], sRGBLinear, sRGBLinear, { precision: 3 }); // "color(srgb-linear 0 0.214 1)"
+```
 
 ```js
 import { serialize, sRGB, DisplayP3, OKLCH } from "@texel/color";

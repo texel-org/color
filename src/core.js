@@ -123,43 +123,57 @@ const vec3Copy = (input, output) => {
   output[2] = input[2];
 };
 
+// rounds n to the given number of significant digits, leaving it untouched
+// when no precision is requested; the template literal then drops any
+// trailing zeros (e.g. 0.30000000000000004 -> 0.3)
+const toPrecision = (n, precision) =>
+  precision == null ? n : Number(n.toPrecision(precision));
+
 /**
  * Serializes a color to a CSS color string.
  * @param {Vector} input The input color.
  * @param {ColorSpace} inputSpace The input color space.
  * @param {ColorSpace} [outputSpace=inputSpace] The output color space.
+ * @param {Object} [opts] Optional settings.
+ * @param {number} [opts.precision] Number of significant digits to round each (non-sRGB) coordinate to; defaults to full precision.
  * @returns {string} The serialized color string.
  * @method
  * @category core
  */
-export const serialize = (input, inputSpace, outputSpace = inputSpace) => {
+export const serialize = (input, inputSpace, outputSpace = inputSpace, opts) => {
   if (!inputSpace) throw new Error(`must specify an input space`);
+  // only read precision when an options object is actually passed
+  const precision = opts ? opts.precision : undefined;
   // extract alpha if present
   let alpha = 1;
   if (input.length > 3) {
     alpha = input[3];
   }
-  // copy into temp
-  vec3Copy(input, tmp3);
-  // convert if needed
+  // convert if needed, otherwise just copy into temp
   if (inputSpace !== outputSpace) {
     convert(input, inputSpace, outputSpace, tmp3);
+  } else {
+    vec3Copy(input, tmp3);
   }
   const id = outputSpace.id;
   if (id === "srgb") {
-    // uses the legacy rgb() format
+    // uses the legacy rgb() format (always byte-quantized)
     const r = floatToByte(tmp3[0]);
     const g = floatToByte(tmp3[1]);
     const b = floatToByte(tmp3[2]);
     const rgb = `${r}, ${g}, ${b}`;
     return alpha === 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
   } else {
-    const alphaSuffix = alpha === 1 ? "" : ` / ${alpha}`;
+    const c0 = toPrecision(tmp3[0], precision);
+    const c1 = toPrecision(tmp3[1], precision);
+    const c2 = toPrecision(tmp3[2], precision);
+    const alphaSuffix =
+      alpha === 1 ? "" : ` / ${toPrecision(alpha, precision)}`;
     if (id === "oklab" || id === "oklch") {
       // older versions of Safari don't support oklch with 0..1 L but do support %
-      return `${id}(${tmp3[0] * 100}% ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
+      return `${id}(${toPrecision(tmp3[0] * 100, precision)}% ${c1} ${c2}${alphaSuffix})`;
     } else {
-      return `color(${id} ${tmp3[0]} ${tmp3[1]} ${tmp3[2]}${alphaSuffix})`;
+      return `color(${id} ${c0} ${c1} ${c2}${alphaSuffix})`;
     }
   }
 };
